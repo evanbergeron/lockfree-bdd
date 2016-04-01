@@ -1,0 +1,10 @@
+# Site settings
+title: Lockfree BDDs
+tag_text: Lockfree BDDs
+description: Foobar
+
+# Build settings
+markdown: kramdown
+exclude: ["README.md"]
+sass:
+  style: compressed
