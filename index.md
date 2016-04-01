@@ -6,7 +6,33 @@ This is Evan Bergeron and Kevin Zheng's 15-418 final project site.
 
 ## Summary
 
+We are going to implement lockfree binary decision diagrams in C++.
+
 ## Background
+
+Binary decision diagrams are data structures used to represent boolean functions. We'll give some background on boolean functions and then discuss how to represent them computationally.
+
+### The Math
+
+Recall that a boolean function is a function of the form
+
+$$f : \textbf{2}^k \rightarrow \textbf{2}$$
+
+where $\textbf{2} = \\{ 0, 1 \\}$. These can be represented as rooted binary trees. Take some ordering on the input variables. Set $x_0$ to be the root of the tree. Then the left child of the root corresponds with the assignment $x_0 = 0$ and the right chld means $x_0 = 1$. Continue this inductively down to the leaves.
+
+The leaves then represent a complete assignment of the input variables. Call this assignment $\textbf{v}$. Set each leaf to be $f(\textbf{v})$.
+
+Some of the subtrees of this complete binary tree may be identical (isomorphic). Starting at the root and moving inductively downward, join subtrees that are isomorphic. If both subtrees of a node are isomorphic, remove this node (in a sense, this variables does not matter).
+
+The result of this process is called a *reduced ordered binary decision diagram*, or ROBDD. When people say BDD, they usually mean ROBDD.
+
+ROBDDs have a number of useful properties, not the least of which is *canonicity*. Which is to say, given a boolean function $f$ and an ordering on the variables $\leq$, there exists a unique ROBDD representing $f$ with the $\leq$ ordering.
+
+Critically, this means that boolean function equivalence can be determined by structural equivalence.
+
+### The Data Structure
+
+How are BDDs often implemented? Naturally, there are number of ways.
 
 ## The Challenge
 
