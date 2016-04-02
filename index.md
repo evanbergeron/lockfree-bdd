@@ -6,7 +6,7 @@ This is Evan Bergeron and Kevin Zheng's 15-418 final project site.
 
 ## Summary
 
-We are going to implement lockfree binary decision diagrams in C++.
+We are going to produce two binary decision diagram library implementations, one with fine-grained locking, and one lockfree. Everything will be written in C++.
 
 ## Background
 
@@ -18,7 +18,7 @@ Recall that a boolean function is a function of the form
 
 $$f : \textbf{2}^k \rightarrow \textbf{2}$$
 
-where $\textbf{2} = \\{ 0, 1 \\}$. These can be represented as rooted binary trees. Take some ordering on the input variables. Set $x_0$ to be the root of the tree. Then the left child of the root corresponds with the assignment $x_0 = 0$ and the right chld means $x_0 = 1$. Continue this inductively down to the leaves.
+where $\textbf{2} = \\{ 0, 1 \\}$. These can be represented as rooted binary trees. Take some ordering on the input variables. Set $x_0$ to be the root of the tree. Then the left child of the root corresponds with the assignment $x_0 = 0$ and the right child means $x_0 = 1$. Continue this inductively down to the leaves.
 
 The leaves then represent a complete assignment of the input variables. Call this assignment $\textbf{v}$. Set each leaf to be $f(\textbf{v})$.
 
@@ -47,9 +47,11 @@ For this reason, building a performant parallel hash table is in order. This is 
 
 ## The Challenge
 
-We hope to build a performant, parallel hash table as the backbone of this project. We intend to offer a handful of solutions and compare performance across implementations.
+We intend to build a performant, parallel hash table as the backbone of this project. We intend to offer a handful of solutions and compare performance across implementations.
 
 The main goal is a separate-chained lock-free hash table. Evidence suggests that hash tables are a data structure that benefit greatly from non-blocking implementations. We'll also investigate fine-grained locking with separate-chaining, along with various probing strategies.
+
+Further, paralleling BDD construction seems nontrivial, so even once we finish implementing a lockfree hash table, there will be cleverness required in its usage.
 
 ## Resources
 We intend on starting from scratch, though with some papers and code as reference. In particular, we expect the Harris paper "A Pragmatic Implementation of Non-Blocking Linked Lists" to be invaluable, as it has been for other students in the past. There are also a number of open-source BDD libraries out there, which will serve as reference points for sequential implementations.
@@ -65,6 +67,8 @@ Further, we may look into performance testing on the Xeon Phis.
 * Lock-free implementations of linked list, separately-chained hash table, and BDD library
 * Benchmarks investigating performance across both implementations
 * A handful of canonical BDD examples, specifically nqueens
+
+Our understanding of the project expectations is that successful completion of the above will constitute an A on the project. Further areas of exploration include:
 
 ### Hope to Achieve
 * Increasingly clever hash tables, perhaps using binary trees instead of linked lists in each bucket.
