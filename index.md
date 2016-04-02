@@ -32,13 +32,38 @@ Critically, this means that boolean function equivalence can be determined by st
 
 ### The Data Structure
 
-How are BDDs often implemented? Naturally, there are number of ways.
+How are BDDs often implemented? Naturally, there are number of ways. Building an ordered, non-reduced BDD is easy. Supporting the merging operations quickly is the main task. Specifically, there are two main tasks
+
+* Merge isomorphic subgraphs
+* Eliminate nodes whose children are ismorphic.
+
+Typically, when building a ROBDD, we reduce as we go, rather than build the exponentially large data structure and then reduce. A hash table supports these operations well.
+
+A typical implementation will maintain a "unique-table" - prior to adding a node $f = (g, v, h)$, we check if the node we're adding is already in the table. If so, proceed, otherwise add. This table can then be built recursively from the leaves up.
+
+In general, of course, the BDDs are exponential in size, even if reduced. This provides an avenue for parallelism. Building the unique table in parallel may provide a good deal of speedup.
+
+For this reason, building a performant parallel hash table is in order. This is the central challenge of the project.
 
 ## The Challenge
 
+We hope to build a performant, parallel hash table as the backbone of this project. We intend to offer a handful of solutions and compare performance across implementations.
+
+The main goal is a separate-chained lock-free hash table. Evidence suggests that hash tables are a data structure that benefit greatly from non-blocking implementations. We'll also investigate fine-grained locking with separate-chaining, along with various probing strategies.
+
 ## Resources
+We intend on starting from scratch, though with some papers and code as reference. In particular, we expect the Harris paper "A Pragmatic Implementation of Non-Blocking Linked Lists" to be invaluable, as it has been for other students in the past. There are also a number of open-source BDD libraries out there, which will serve as reference points for sequential implementations.
 
 ## Goals and Deliverables
+
+### Plan to Achieve
+* Fine-grained locking implementations of linked list, separately-chained hash table, and BDD library
+* Lock-free implementations of linked list, separately-chained hash table, and BDD library
+* Benchmarks investigating performance across both implementations
+* A handful of canonical BDD examples, specifically nqueens
+
+### Hope to Achieve
+* Increasingly clever hash tables, perhaps using binary trees instead of linked lists in each bucket.
 
 ## Platform Choice
 
