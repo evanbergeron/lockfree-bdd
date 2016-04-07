@@ -5,14 +5,14 @@ GCC=gcc ${D} ${FLAGS}
 
 default: nqueens
 
-hashtable : include/contracts.h include/xalloc.h lib/xalloc.c include/hashtable.h include/hashtable.c test/hashtable-test.c
-	$(GCC) lib/xalloc.c include/hashtable.c test/hashtable-test.c -o bin/hashtable
+hashtable : include/contracts.h include/xalloc.h lib/xalloc.c include/hashtable.h lib/hashtable.c test/hashtable-test.c
+	$(GCC) lib/xalloc.c lib/hashtable.c test/hashtable-test.c -o bin/hashtable
 
-robdd : include/contracts.h include/xalloc.h lib/xalloc.c include/hashtable.h include/hashtable.c include/robdd.h src/robdd.c test/robdd-test.c
-	$(GCC) lib/xalloc.c include/hashtable.c src/robdd.c test/robdd-test.c -o bin/robdd
+robdd : include/contracts.h include/xalloc.h lib/xalloc.c include/hashtable.h lib/hashtable.c include/robdd.h src/robdd.c test/robdd-test.c
+	$(GCC) lib/xalloc.c lib/hashtable.c src/robdd.c test/robdd-test.c -o bin/robdd
 
-nqueens : include/contracts.h include/xalloc.h lib/xalloc.c include/hashtable.h include/hashtable.c include/robdd.h src/robdd.c test/nqueens.c
-	$(GCC) lib/xalloc.c include/hashtable.c src/robdd.c test/nqueens.c -o bin/nqueens
+nqueens : include/contracts.h include/xalloc.h lib/xalloc.c include/hashtable.h lib/hashtable.c include/robdd.h src/robdd.c test/nqueens.c
+	$(GCC) lib/xalloc.c lib/hashtable.c src/robdd.c test/nqueens.c -o bin/nqueens
 
 clean :
 	${RM} -rf bin/a.out a.out.dSYM

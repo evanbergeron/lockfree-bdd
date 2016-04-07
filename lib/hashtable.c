@@ -1,13 +1,13 @@
 /* Hash tables (fixed size)
- * 15-122 Principles of Imperative Computation, Fall 2010 
+ * 15-122 Principles of Imperative Computation, Fall 2010
  * Frank Pfenning
  */
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "xalloc.h"
-#include "contracts.h"
-#include "hashtable.h"
+#include "../include/xalloc.h"
+#include "../include/contracts.h"
+#include "../include/hashtable.h"
 
 /* Interface type definitions */
 /* see hashtable.h */
@@ -168,7 +168,7 @@ table table_new(int init_size,
   return H;
 }
 
-ht_elem table_insert(table H, ht_elem e) 
+ht_elem table_insert(table H, ht_elem e)
 { REQUIRES(is_table(H));
   ht_elem old_e;
   ht_key k = (*H->elem_key)(e);
