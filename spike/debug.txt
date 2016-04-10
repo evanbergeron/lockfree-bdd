@@ -1,0 +1,32 @@
+Thread 1 insertingThread 0 inserting11
+0
+Thread 1 inserting2
+Thread 1 inserting4Thread 0 inserting
+Thread 1 inserting6
+Thread 1 inserting8
+Thread 1 inserting910
+
+Thread 0 inserting7
+Thread 0 inserting5
+Thread 0 inserting3
+Thread 0 inserting1
+0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+a.out: lib/linkedlist.cpp:123: void assert_full(List*): Assertion `n->value == i' failed.
+
+###############################################################################
+
+Thread 1 inserting Thread 0 inserting 110
+
+Thread 1 inserting 2
+Thread 1 inserting Thread 0 inserting 4
+Thread 1 inserting 6
+Thread 1 inserting 8
+9Thread 1 inserting 10
+
+Thread 0 inserting 7
+Thread 0 inserting 5
+Thread 0 inserting 3
+Thread 0 inserting 1
+0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+a.out: lib/linkedlist.cpp:126: void assert_full(List*): Assertion `0' failed.
+[1]    8709 abort (core dumped)  ./a.out
