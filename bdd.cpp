@@ -81,6 +81,10 @@ bdd_node *bdd_not(bdd_node *a, bdd_node *b) {
   return bdd_apply(a, b, bool_op::NOT);
 }
 
+bdd_node* ithvar(int i) {
+  return lookup_or_insert(i, BDD_TRUE, BDD_FALSE);
+}
+
 /**
  * Initialize the BDD package
  * nodenum - max number of nodes to use in the package
@@ -89,5 +93,7 @@ bdd_node *bdd_not(bdd_node *a, bdd_node *b) {
 int bdd_init(int maxnodes, int cachesize) {
   BDD_TRUE = (bdd_node *)malloc(sizeof(bdd_node));
   BDD_FALSE = (bdd_node *)malloc(sizeof(bdd_node));
+  memo_table_init(cachesize);
+  unique_table_init(maxnodes);
 }
 

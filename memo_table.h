@@ -1,7 +1,21 @@
 #include "bdd.h"
+#include <tuple>
 
 #ifndef MEMO_TABLE_H
 #define MEMO_TABLE_H
+
+struct key_value {
+  std::tuple<bdd_node*, bdd_node*, bdd_node*> key;
+  bdd_node *value;
+};
+
+struct memo_table {
+  int *hash_array;
+  key_value *data_array;
+};
+
+static memo_table *table;
+void memo_table_init(int size);
 
 /**
  * docs yay

@@ -47,3 +47,10 @@ bdd_node *lookup_or_insert(int varid, bdd_node *lo, bdd_node *hi) {
 void clear_table() {
   unique_table.clear();
 }
+
+/*
+ * TODO - nothing to do for this current implementation
+ */
+void unique_table_init(int size) {
+  NULL;
+}

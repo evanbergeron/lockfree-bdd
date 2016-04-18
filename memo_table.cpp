@@ -15,10 +15,16 @@ struct memo_table {
   key_value *data_array;
 };
 
-static memo_table *table = (memo_table*)std::malloc(sizeof(memo_table));
+static memo_table *table;// = (memo_table*)std::malloc(sizeof(memo_table));
 
 int calculate_hash(bdd_node *F, bdd_node *G, bdd_node* H) {
   return 0;
+}
+
+void memo_table_init(int size){
+  table = (memo_table*)std::malloc(sizeof(memo_table));
+  table->hash_array = (int*)std::malloc(sizeof(int) * size);
+  table->data_array = (key_value*)std::malloc(sizeof(key_value) * size);
 }
 
 /**
