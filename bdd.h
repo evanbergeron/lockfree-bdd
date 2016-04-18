@@ -12,7 +12,11 @@ enum bool_op {
   NOT,
 };
 
-struct bdd_node;
+struct bdd_node {
+  int varid;
+  bdd_node *lo;
+  bdd_node *hi;
+};
 
 /**
  * Initialize the BDD package

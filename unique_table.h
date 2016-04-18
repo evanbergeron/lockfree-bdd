@@ -15,6 +15,6 @@ bdd_node *lookup_or_insert(int varid, bdd_node *lo, bdd_node *hi);
 /**
  * Clear the unique table
  */
-int clear_table();
+void clear_table();
 
 #endif /* UNIQUE_TABLE_H */
