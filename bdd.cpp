@@ -58,6 +58,37 @@ bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
 }
 
 /**
+ * Apply a boolean operation on a and b
+ */
+bdd_node *bdd_apply(bdd_node *a, bdd_node *b, bool_op op) {
+  bdd_node *result;
+  switch (op) {
+    case AND:
+      result = ite(a, b, BDD_FALSE);
+      break;
+    case OR:
+      result = ite(a, BDD_TRUE, b);
+      break;
+    case NOT:
+      result = ite(a, BDD_FALSE, BDD_TRUE);
+      break;
+  }
+  return result;
+}
+
+bdd_node *bdd_and(bdd_node *a, bdd_node *b) {
+  return bdd_apply(a, b, bool_op::AND);
+}
+
+bdd_node *bdd_or (bdd_node *a, bdd_node *b) {
+  return bdd_apply(a, b, bool_op::OR);
+}
+
+bdd_node *bdd_not(bdd_node *a, bdd_node *b) {
+  return bdd_apply(a, b, bool_op::NOT);
+}
+
+/**
  * Initialize the BDD package
  * nodenum - max number of nodes to use in the package
  * cachesize - max number of elements to cache

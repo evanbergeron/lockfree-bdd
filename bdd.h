@@ -6,6 +6,12 @@
 #ifndef BDD_H
 #define BDD_H
 
+enum bool_op {
+  AND,
+  OR,
+  NOT,
+};
+
 struct bdd_node;
 
 /**
@@ -14,6 +20,12 @@ struct bdd_node;
  * cachesize - max number of elements to cache
  */
 int bdd_init(int nodenum, int cachesize);
+
+bdd_node *bdd_apply(bdd_node *a, bdd_node *b, bool_op op);
+
+bdd_node *bdd_and(bdd_node *a, bdd_node *b);
+bdd_node *bdd_or (bdd_node *a, bdd_node *b);
+bdd_node *bdd_not(bdd_node *a, bdd_node *b);
 
 
 #endif /* BDD_H */
