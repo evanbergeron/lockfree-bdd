@@ -6,7 +6,11 @@
 #ifndef BDD_H
 #define BDD_H
 
-struct bdd_node;
+struct bdd_node {
+  int varid;
+  bdd_node *lo;
+  bdd_node *hi;
+};
 
 /**
  * Initialize the BDD package

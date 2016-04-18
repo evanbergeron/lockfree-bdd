@@ -2,14 +2,7 @@
 #include "unique_table.h"
 #include "memo_table.h"
 
-
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
-
-struct bdd_node {
-  int varid;
-  bdd_node *lo;
-  bdd_node *hi;
-};
 
 struct bdd {
   bdd_node *root;
@@ -63,7 +56,7 @@ bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
  * cachesize - max number of elements to cache
  */
 int bdd_init(int maxnodes, int cachesize) {
-  BDD_TRUE = (bdd_node *)malloc(sizeof(bdd_node)); 
-  BDD_FALSE = (bdd_node *)malloc(sizeof(bdd_node)); 
+  BDD_TRUE = (bdd_node *)malloc(sizeof(bdd_node));
+  BDD_FALSE = (bdd_node *)malloc(sizeof(bdd_node));
 }
 
