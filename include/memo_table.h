@@ -14,7 +14,6 @@ struct memo_table {
   key_value *data_array;
 };
 
-static memo_table *table;
 void memo_table_init(int size);
 
 /**

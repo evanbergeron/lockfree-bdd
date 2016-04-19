@@ -70,6 +70,8 @@ bdd_node *bdd_apply(bdd_node *a, bdd_node *b, bool_op op) {
     case NOT:
       result = ite(a, BDD_FALSE, BDD_TRUE);
       break;
+    default:
+      return NULL;
   }
   return result;
 }
@@ -98,6 +100,9 @@ bdd_node* ithvar(int i) {
 int bdd_init(int maxnodes, int cachesize) {
   BDD_TRUE = (bdd_node *)malloc(sizeof(bdd_node));
   BDD_FALSE = (bdd_node *)malloc(sizeof(bdd_node));
+  if (BDD_TRUE == NULL || BDD_FALSE == NULL) {
+    return 1;
+  }
 
   // TODO maybe reconsider this?
   BDD_TRUE->varid = std::numeric_limits<int>::max();
@@ -105,6 +110,7 @@ int bdd_init(int maxnodes, int cachesize) {
 
   memo_table_init(cachesize);
   unique_table_init(maxnodes);
+  return 0;
 }
 
 std::string node_to_str(bdd_node *n) {
