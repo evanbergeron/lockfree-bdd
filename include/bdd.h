@@ -31,6 +31,6 @@ bdd_node *bdd_and(bdd_node *a, bdd_node *b);
 bdd_node *bdd_or (bdd_node *a, bdd_node *b);
 bdd_node *bdd_not(bdd_node *a);
 bdd_node* ithvar(int i);
-void bdd_graphviz(bdd_node *root);
+void bdd_graphviz();
 
 #endif /* BDD_H */
