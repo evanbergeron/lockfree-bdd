@@ -27,13 +27,13 @@ static ut unique_table;
 /*
  * Lookup or insert a triple (v,lo,hi) into the unique table
  */
-bdd_node *lookup_or_insert(int varid, bdd_node *lo, bdd_node *hi) {
+bdd_node *lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo) {
   const ut_key key {varid, lo, hi};
   if (unique_table.count(key) > 0) {
     return unique_table[key];
   } else {
     /* bdd_node *data = (bdd_node*)malloc(sizeof(data)); */
-    bdd_node *data = (bdd_node*)malloc(sizeof(data));
+    bdd_node *data = (bdd_node*)malloc(sizeof(bdd_node));
     data->varid = varid;
     data->lo = lo;
     data->hi = hi;
