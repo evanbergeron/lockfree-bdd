@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../bdd.h"
+#include "bdd.h"
 
 bdd_node *only_nth(int n) {
   return nullptr;
