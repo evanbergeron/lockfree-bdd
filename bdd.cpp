@@ -116,8 +116,16 @@ void node_graphviz(bdd_node *node) {
   if (node == nullptr) {
     return;
   }
-  std::cout << " " << node_to_str(node) <<  " -> " << node_to_str(node->lo) << std::endl;
-  std::cout << " " << node_to_str(node) <<  " -> " << node_to_str(node->hi) << std::endl;
+  std::cout << " " << node_to_str(node) <<  " -> "
+            << node_to_str(node->lo)
+            << " [label=lo]"
+            << std::endl;
+
+  std::cout << " " << node_to_str(node) <<  " -> "
+            << node_to_str(node->hi)
+            << " [label=hi]"
+            << std::endl;
+
   if (node->lo != BDD_TRUE && node->lo != BDD_FALSE) node_graphviz(node->lo);
   if (node->hi != BDD_TRUE && node->hi != BDD_FALSE) node_graphviz(node->hi);
 }
