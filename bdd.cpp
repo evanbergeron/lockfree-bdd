@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <limits>
+#include <iostream>
+#include <string>
 #include "unique_table.h"
 #include "memo_table.h"
 
@@ -78,8 +80,8 @@ bdd_node *bdd_or (bdd_node *a, bdd_node *b) {
   return bdd_apply(a, b, bool_op::OR);
 }
 
-bdd_node *bdd_not(bdd_node *a, bdd_node *b) {
-  return bdd_apply(a, b, bool_op::NOT);
+bdd_node *bdd_not(bdd_node *a) {
+  return bdd_apply(a, a, bool_op::NOT);
 }
 
 bdd_node* ithvar(int i) {
@@ -103,3 +105,25 @@ int bdd_init(int maxnodes, int cachesize) {
   unique_table_init(maxnodes);
 }
 
+std::string node_to_str(bdd_node *n) {
+  if (n == BDD_TRUE) { return "TRUE"; }
+  if (n == BDD_FALSE) { return "FALSE"; }
+  if (n == nullptr) { return ""; }
+  return std::to_string(n->varid);
+}
+
+void node_graphviz(bdd_node *node) {
+  if (node == nullptr) {
+    return;
+  }
+  std::cout << " " << node_to_str(node) <<  " -> " << node_to_str(node->lo) << std::endl;
+  std::cout << " " << node_to_str(node) <<  " -> " << node_to_str(node->hi) << std::endl;
+  if (node->lo != BDD_TRUE && node->lo != BDD_FALSE) node_graphviz(node->lo);
+  if (node->hi != BDD_TRUE && node->hi != BDD_FALSE) node_graphviz(node->hi);
+}
+
+void bdd_graphviz(bdd_node *root) {
+  std::cout << "digraph G {" << std::endl;
+  node_graphviz(root);
+  std::cout << "}" << std::endl;
+}
