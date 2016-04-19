@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cmath>
-#include "../bdd.h"
+#include "bdd.h"
 
 /*
  * Given a list of variable indices, returns a bdd node
