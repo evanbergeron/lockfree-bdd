@@ -119,13 +119,15 @@ void node_graphviz(bdd_node *node) {
     return;
   }
 
-  std::cout << " " << node_to_str(node) <<  " -> "
-            << node_to_str(node->lo)
+  std::cout << " \"" << node_to_str(node)  << "_" << (void*)(node) << "\""
+            <<  " -> "
+            << "\"" << node_to_str(node->lo) << "_" << (void*)(node->lo) << "\""
             << " [label=lo]"
             << std::endl;
 
-  std::cout << " " << node_to_str(node) <<  " -> "
-            << node_to_str(node->hi)
+  std::cout << " \"" << node_to_str(node)  << "_" << (void*)(node) << "\""
+            <<  " -> "
+            << "\"" << node_to_str(node->hi) << "_" << (void*)(node->hi) << "\""
             << " [label=hi]"
             << std::endl;
 
@@ -134,7 +136,7 @@ void node_graphviz(bdd_node *node) {
 }
 
 void bdd_graphviz(bdd_node *root) {
-  std::cout << "digraph G {" << std::endl;
+  std::cout << "strict digraph G {" << std::endl;
   node_graphviz(root);
   std::cout << "}" << std::endl;
 }
