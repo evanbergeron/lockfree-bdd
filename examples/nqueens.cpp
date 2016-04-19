@@ -111,11 +111,25 @@ bdd_node *col_constraints(int n) {
   return result;
 }
 
-bdd_node *pdiag_constraints(int n) {}
-bdd_node *ndiag_constraints(int n) {}
+bdd_node *pdiag_constraints(int n) {
+  bdd_node *result = at_most_one_per_pdiag(n, 0);
+  for (int pdiag = 1; pdiag < n + n - 1; pdiag++) {
+    result = bdd_and(result, at_most_one_per_pdiag(n, pdiag));
+  }
+  return result;
+}
+
+bdd_node *ndiag_constraints(int n) {
+  bdd_node *result = at_most_one_per_ndiag(n, -(n-1));
+  for (int ndiag = -(n-1) + 1; ndiag <= n - 1; ndiag++) {
+    result = bdd_and(result, at_most_one_per_ndiag(n, ndiag));
+  }
+  return result;
+}
 
 void make_board(int n) {
 
+  // Probably big enough?
   bdd_init(n * n * n * n, n * n * n * n);
 
   /*
@@ -127,8 +141,19 @@ void make_board(int n) {
 
 }
 
-void nqueens(int n) {
+bdd_node *nqueens(int n) {
+
   make_board(n);
+
+  bdd_node *rows = row_constraints(n);
+  bdd_node *cols = col_constraints(n);
+  bdd_node *pdiags = pdiag_constraints(n);
+  bdd_node *ndiags = ndiag_constraints(n);
+
+  return bdd_and(rows,
+         bdd_and(cols,
+         bdd_and(pdiags,
+                 ndiags)));
 }
 
 int main() {
