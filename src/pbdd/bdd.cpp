@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <cassert>
 #include <limits>
 #include <iostream>
+#include <unordered_map>
 #include <string>
 #include "unique_table.h"
 #include "memo_table.h"
@@ -99,7 +101,7 @@ int bdd_init(int maxnodes, int cachesize) {
 
   // TODO maybe reconsider this?
   BDD_TRUE->varid = std::numeric_limits<int>::max();
-  BDD_FALSE->varid = std::numeric_limits<int>::max();
+  BDD_FALSE->varid = std::numeric_limits<int>::max() - 1;
 
   memo_table_init(cachesize);
   unique_table_init(maxnodes);
@@ -116,6 +118,7 @@ void node_graphviz(bdd_node *node) {
   if (node == nullptr) {
     return;
   }
+
   std::cout << " " << node_to_str(node) <<  " -> "
             << node_to_str(node->lo)
             << " [label=lo]"
