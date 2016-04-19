@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 #include <tuple>
 #include <unordered_map>
 #include "bdd.h"
@@ -46,6 +47,17 @@ bdd_node *lookup_or_insert(int varid, bdd_node *lo, bdd_node *hi) {
  */
 void clear_table() {
   unique_table.clear();
+}
+
+/**
+ * Get all nodes in the graph
+ */
+std::vector<bdd_node *> all_nodes() {
+  std::vector<bdd_node *> result;
+  for (const auto &kv : unique_table) {
+    result.push_back(kv.second);
+  }
+  return result;
 }
 
 /*
