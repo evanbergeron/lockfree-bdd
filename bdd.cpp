@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <limits>
 #include "unique_table.h"
 #include "memo_table.h"
 
@@ -93,6 +94,11 @@ bdd_node* ithvar(int i) {
 int bdd_init(int maxnodes, int cachesize) {
   BDD_TRUE = (bdd_node *)malloc(sizeof(bdd_node));
   BDD_FALSE = (bdd_node *)malloc(sizeof(bdd_node));
+
+  // TODO maybe reconsider this?
+  BDD_TRUE->varid = std::numeric_limits<int>::max();
+  BDD_FALSE->varid = std::numeric_limits<int>::max();
+
   memo_table_init(cachesize);
   unique_table_init(maxnodes);
 }
