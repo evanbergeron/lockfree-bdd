@@ -22,7 +22,7 @@ bdd_node *at_least_one(int *idxs, int size) {
  * at most one of the variables is true.
  */
 bdd_node *at_most_one(int *idxs, int size) {
-  bdd_node *result;
+  bdd_node *exactly_one;
   for (int i = 0; i < size; i++) {
     bdd_node *only_i = ithvar(idxs[i]);
     for (int j = 0; j < size; j++) {
@@ -31,10 +31,14 @@ bdd_node *at_most_one(int *idxs, int size) {
         only_i = bdd_and(only_i, bdd_not(not_i));
       }
     }
-    if (i == 0) { result = only_i; }
-    else { result = bdd_or(result, only_i); }
+    if (i == 0) { exactly_one = only_i; }
+    else { exactly_one = bdd_or(exactly_one, only_i); }
   }
-  return result;
+  bdd_node *none = bdd_not(ithvar(idxs[0]));
+  for (int i = 1; i < size; i++) {
+    none = bdd_and(none, bdd_not(ithvar(idxs[i])));
+  }
+  return bdd_or(exactly_one, none);
 }
 
 /*
