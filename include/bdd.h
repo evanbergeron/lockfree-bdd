@@ -40,4 +40,6 @@ std::vector<std::map<int, bool>> *allsat(bdd_node *fn);
 void print_sat(std::map<int, bool> &assignments);
 void print_allsat(bdd_node *fn);
 
+void print_stats();
+
 #endif /* BDD_H */

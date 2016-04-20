@@ -24,4 +24,6 @@ void put_result(bdd_node *F, bdd_node *G, bdd_node *H, bdd_node *result);
  */
 bool contains_key(bdd_node *F, bdd_node *G, bdd_node *H);
 
+void print_mt_stats();
+
 #endif /* MEMO_TABLE_H */

@@ -228,3 +228,7 @@ void bdd_graphviz(bdd_node *root) {
   node_graphviz(root);
   std::cout << "}" << std::endl;
 }
+
+void print_stats() {
+  print_mt_stats();
+}
