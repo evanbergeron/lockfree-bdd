@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include <cmath>
 #include "bdd.h"
 
@@ -7,6 +8,7 @@
  * representing the the or of all of them.
  */
 bdd_node *at_least_one(int *idxs, int size) {
+  assert(size > 0);
   bdd_node *result;
   for (int i = 0; i < size; i++) {
     bdd_node *only_i = ithvar(idxs[i]);
@@ -22,6 +24,7 @@ bdd_node *at_least_one(int *idxs, int size) {
  * at most one of the variables is true.
  */
 bdd_node *at_most_one(int *idxs, int size) {
+  assert(size > 0);
   bdd_node *exactly_one;
   for (int i = 0; i < size; i++) {
     bdd_node *only_i = ithvar(idxs[i]);
@@ -38,7 +41,8 @@ bdd_node *at_most_one(int *idxs, int size) {
   for (int i = 1; i < size; i++) {
     none = bdd_and(none, bdd_not(ithvar(idxs[i])));
   }
-  return bdd_or(exactly_one, none);
+  bdd_node *result = bdd_or(exactly_one, none);
+  return result;
 }
 
 /*
@@ -47,7 +51,9 @@ bdd_node *at_most_one(int *idxs, int size) {
  * exactly one of the variables is true.
  */
 bdd_node *exactly_one(int *idxs, int size) {
-  return bdd_and(at_most_one(idxs, size), at_least_one(idxs, size));
+  assert(size > 0);
+  bdd_node *result = bdd_and(at_most_one(idxs, size), at_least_one(idxs, size));
+  return result;
 }
 
 bdd_node *one_per_row(int n, int row) {
@@ -55,7 +61,8 @@ bdd_node *one_per_row(int n, int row) {
   for (int i = 0; i < n; i ++) {
     idxs[i] = n * row + i;
   }
-  return exactly_one(idxs, n);
+  bdd_node *result = exactly_one(idxs, n);
+  return result;
 }
 
 bdd_node *one_per_col(int n, int col) {
@@ -63,7 +70,8 @@ bdd_node *one_per_col(int n, int col) {
   for (int i = 0; i < n; i ++) {
     idxs[i] = col + (n * i);
   }
-  return exactly_one(idxs, n);
+  bdd_node *result = exactly_one(idxs, n);
+  return result;
 }
 
 /*
@@ -72,14 +80,16 @@ bdd_node *one_per_col(int n, int col) {
  * 1 and the middle pdiag has length n.
  */
 bdd_node *at_most_one_per_pdiag(int n, int pdiag) {
-  int idxs[1 - std::abs(pdiag - n) + n];
+  int size = -std::abs(pdiag - (n - 1)) + n;
+  int idxs[size];
   int idx = 0;
   for (int i = 0; i < n * n; i++) {
     if ((i % n) + (i / n) == pdiag) {
       idxs[idx] = i; idx++;
     }
   }
-  return at_most_one(idxs, 1 - std::abs(pdiag - n) + n);
+  bdd_node *result = at_most_one(idxs, size);
+  return result;
 }
 
 /*
@@ -89,14 +99,16 @@ bdd_node *at_most_one_per_pdiag(int n, int pdiag) {
  * 0 represents the middle diagonal of length n.
  */
 bdd_node *at_most_one_per_ndiag(int n, int ndiag) {
-  int idxs[-std::abs(ndiag) + n];
+  int size = -std::abs(ndiag) + n;
+  int idxs[size];
   int idx = 0;
   for (int i = 0; i < n * n; i++) {
     if ((i / n) - (i % n) == ndiag) {
       idxs[idx] = i; idx++;
     }
   }
-  return at_most_one(idxs, -std::abs(ndiag) + n);
+  bdd_node *result = at_most_one(idxs, size);
+  return result;
 }
 
 bdd_node *row_constraints(int n) {
@@ -154,13 +166,14 @@ bdd_node *nqueens(int n) {
   bdd_node *pdiags = pdiag_constraints(n);
   bdd_node *ndiags = ndiag_constraints(n);
 
-  return bdd_and(rows,
+  bdd_node *result = bdd_and(rows,
          bdd_and(cols,
          bdd_and(pdiags,
                  ndiags)));
+  return result;
 }
 
 int main() {
-  bdd_graphviz(nqueens(8));
+  bdd_graphviz(nqueens(4));
   return 0;
 }
