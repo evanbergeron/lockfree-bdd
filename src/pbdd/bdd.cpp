@@ -184,6 +184,14 @@ void print_sat(std::map<int, bool> &assignments) {
   return;
 }
 
+void print_allsat(bdd_node *fn) {
+  std::vector<std::map<int, bool>> *sats = allsat(fn);
+  for (auto &sat : (*sats)) {
+    print_sat(sat);
+  }
+  delete sats;
+}
+
 
 std::string node_to_str(bdd_node *n) {
   if (n == BDD_TRUE) { return "TRUE"; }
