@@ -4,6 +4,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
+#include <vector>
+#include <map>
 #include "unique_table.h"
 #include "memo_table.h"
 
@@ -92,6 +94,7 @@ bdd_node* ithvar(int i) {
   return lookup_or_insert(i, BDD_TRUE, BDD_FALSE);
 }
 
+
 /**
  * Initialize the BDD package
  * nodenum - max number of nodes to use in the package
@@ -112,6 +115,75 @@ int bdd_init(int maxnodes, int cachesize) {
   unique_table_init(maxnodes);
   return 0;
 }
+
+
+void __allsat_helper(bdd_node *fn, std::vector<std::map<int, bool>> &results,
+                                   std::vector<int> &path_vars,
+                                   std::vector<bool> &path_vals) {
+  // Base case - insert the path taken
+  if (fn == BDD_TRUE) {
+    std::map<int, bool> result;
+    for (std::size_t i = 0; i < path_vars.size(); i++) {
+      int varid = path_vars.at(i);
+      bool value = path_vals.at(i);
+      result.insert(std::pair<int, bool>(varid, value));
+    }
+    results.push_back(result);
+    return;
+  }
+
+  // Base case - don't do anything
+  if (fn == BDD_FALSE) {
+    return;
+  }
+  
+  // Follow the lo path
+  path_vars.push_back(fn->varid);
+  path_vals.push_back(false);
+  __allsat_helper(fn->lo, results, path_vars, path_vals);
+  path_vals.pop_back();
+
+  // Follow the hi path
+  path_vals.push_back(true);
+  __allsat_helper(fn->hi, results, path_vars, path_vals);
+  path_vals.pop_back();
+
+  path_vars.pop_back();
+
+  return;
+}
+
+/**
+ * Return a heap-allocated vector of all satisfying assignments
+ */
+std::vector<std::map<int, bool>> *allsat(bdd_node *fn) {
+  std::vector<std::map<int, bool>> *results = new std::vector<std::map<int, bool>>;
+  std::vector<int> path_vars;
+  std::vector<bool> path_vals;
+  __allsat_helper(fn, *results, path_vars, path_vals);
+  return results;
+}
+
+void print_sat(std::map<int, bool> &assignments) {
+  if (assignments.empty()) {
+    std::cout << "Empty assignments" << std::endl;
+  }
+
+  int max_var = assignments.rbegin()->first;
+
+  for (int i = 0; i < max_var; i++) {
+    if (assignments.count(i) > 0) {
+      std::cout << (assignments[i] ? "1" : "0");
+    } else {
+      std::cout << "X"; 
+    }
+  }
+
+  std::cout << std::endl;
+
+  return;
+}
+
 
 std::string node_to_str(bdd_node *n) {
   if (n == BDD_TRUE) { return "TRUE"; }
