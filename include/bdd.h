@@ -6,6 +6,9 @@
 #ifndef BDD_H
 #define BDD_H
 
+#include <map>
+#include <vector>
+
 enum bool_op {
   AND,
   OR,
@@ -32,5 +35,8 @@ bdd_node *bdd_or (bdd_node *a, bdd_node *b);
 bdd_node *bdd_not(bdd_node *a);
 bdd_node* ithvar(int i);
 void bdd_graphviz(bdd_node *root);
+
+std::vector<std::map<int, bool>> *allsat(bdd_node *fn);
+void print_sat(std::map<int, bool> &assignments);
 
 #endif /* BDD_H */
