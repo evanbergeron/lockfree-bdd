@@ -2,6 +2,8 @@
 layout: default
 ---
 
+[Checkpoint](http://evan.sh/lockfree-bdd/checkpoint.html)
+
 This is Evan Bergeron and Kevin Zheng's 15-418 final project site.
 
 ## Summary
