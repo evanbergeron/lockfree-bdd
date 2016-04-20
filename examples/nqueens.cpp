@@ -72,14 +72,14 @@ bdd_node *one_per_col(int n, int col) {
  * 1 and the middle pdiag has length n.
  */
 bdd_node *at_most_one_per_pdiag(int n, int pdiag) {
-  int idxs[-std::abs(pdiag - n) + n];
+  int idxs[1 - std::abs(pdiag - n) + n];
   int idx = 0;
   for (int i = 0; i < n * n; i++) {
     if ((i % n) + (i / n) == pdiag) {
       idxs[idx] = i; idx++;
     }
   }
-  return at_most_one(idxs, -std::abs(pdiag - n) + n);
+  return at_most_one(idxs, 1 - std::abs(pdiag - n) + n);
 }
 
 /*
