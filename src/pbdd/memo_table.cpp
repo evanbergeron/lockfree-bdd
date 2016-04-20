@@ -68,8 +68,10 @@ bdd_node *put_result(bdd_node *F, bdd_node *G, bdd_node *H, bdd_node *result) {
 /**
  * docs yay
  */
-bdd_node *contains_key(bdd_node *F, bdd_node *G, bdd_node *H) {
+bool contains_key(bdd_node *F, bdd_node *G, bdd_node *H) {
   int hash = calculate_hash(F, G, H);
   int index = hash % TABLE_SIZE;
-  return NULL;
+  int cur_hash = table->hash_array[index];
+  std::tuple<bdd_node*, bdd_node*, bdd_node*> key {F, G, H};
+  return (cur_hash == hash && table->data_array[index].key == key);
 }
