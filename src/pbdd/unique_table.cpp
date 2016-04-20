@@ -63,6 +63,4 @@ std::vector<bdd_node *> all_nodes() {
 /*
  * TODO - nothing to do for this current implementation
  */
-void unique_table_init(int size) {
-  NULL;
-}
+void unique_table_init(int size) {}
