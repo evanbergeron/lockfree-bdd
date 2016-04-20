@@ -30,9 +30,11 @@ bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
   if (G == BDD_TRUE && H == BDD_FALSE) {
     return F;
   }
+
   // check memo table
-  if (contains_key(F, G, H)) {
-    return get_result(F, G, H);
+  bdd_node *cached_result = get_result(F, G, H);
+  if (cached_result != nullptr) {
+    return cached_result;
   }
 
   int min_varid = MIN3(F->varid, G->varid, H->varid);
