@@ -8,6 +8,7 @@
 #include <map>
 #include "unique_table.h"
 #include "memo_table.h"
+#include "hash_table.h"
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
 
@@ -17,7 +18,6 @@ struct bdd {
 
 static bdd_node *BDD_TRUE;
 static bdd_node *BDD_FALSE;
-
 
 bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
   // base cases
@@ -96,6 +96,7 @@ bdd_node* ithvar(int i) {
   return lookup_or_insert(i, BDD_TRUE, BDD_FALSE);
 }
 
+static HashTable *uni;
 
 /**
  * Initialize the BDD package
@@ -115,6 +116,7 @@ int bdd_init(int maxnodes, int cachesize) {
 
   memo_table_init(cachesize);
   unique_table_init(maxnodes);
+  /* uni = new HashTable(maxnodes); */
   return 0;
 }
 
@@ -138,7 +140,7 @@ void __allsat_helper(bdd_node *fn, std::vector<std::map<int, bool>> &results,
   if (fn == BDD_FALSE) {
     return;
   }
-  
+
   // Follow the lo path
   path_vars.push_back(fn->varid);
   path_vals.push_back(false);
@@ -177,7 +179,7 @@ void print_sat(std::map<int, bool> &assignments) {
     if (assignments.count(i) > 0) {
       std::cout << (assignments[i] ? "1" : "0");
     } else {
-      std::cout << "X"; 
+      std::cout << "X";
     }
   }
 

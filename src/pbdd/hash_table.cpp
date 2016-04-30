@@ -1,21 +1,9 @@
 #include <cstdint>
 #include <iostream>
 #include <tuple>
-#include <mutex>
 #include <unordered_map>
 
-#include "bdd.h"
-
-typedef std::tuple<int, bdd_node*, bdd_node*> local_ut_key;
-
-struct Node {
-  bdd_node *data;
-  Node *next;
-};
-
-struct LinkedList {
-  Node *head;
-};
+#include "hash_table.h"
 
 void add_to_front(LinkedList *l, Node *n) {
   if (!l->head) {
@@ -40,52 +28,44 @@ LinkedList *newLinkedList() {
   return (LinkedList*)std::malloc(sizeof(LinkedList));
 }
 
-class HashTable {
-  private:
-    int arr[100];
-    LinkedList **array;
-    std::mutex *bucket_locks;
+int HashTable::hash(local_ut_key k) {
+  return std::get<0>(k)
+          ^ reinterpret_cast<std::uintptr_t>(std::get<1>(k))
+          ^ reinterpret_cast<std::uintptr_t>(std::get<2>(k));
+}
 
-    int hash(local_ut_key k) {
-      return std::get<0>(k)
-              ^ reinterpret_cast<std::uintptr_t>(std::get<1>(k))
-              ^ reinterpret_cast<std::uintptr_t>(std::get<2>(k));
-    }
+HashTable::HashTable(int maxnodes) {
+  array = (LinkedList**)std::malloc(sizeof(LinkedList*) * maxnodes);
+  bucket_locks = (std::mutex*)std::malloc(sizeof(std::mutex) * maxnodes);
+  for (int i = 0; i < maxnodes; i++)
+    array[i] = newLinkedList();
+}
 
-  public:
-    HashTable(int maxnodes) {
-      array = (LinkedList**)std::malloc(sizeof(LinkedList*) * maxnodes);
-      bucket_locks = (std::mutex*)std::malloc(sizeof(std::mutex) * maxnodes);
-      for (int i = 0; i < maxnodes; i++)
-        array[i] = newLinkedList();
-    }
+bdd_node *HashTable::lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo) {
 
-    bdd_node *lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo) {
+  local_ut_key k (varid, hi, lo);
+  int idx = hash(k) % 100;
 
-      local_ut_key k (varid, hi, lo);
-      int idx = hash(k) % 100;
+  bucket_locks[idx].lock();
 
-      bucket_locks[idx].lock();
+  LinkedList *chain = array[idx];
+  bdd_node *result;
 
-      LinkedList *chain = array[idx];
-      bdd_node *result;
+  if ((result = find(chain, varid, hi, lo)) != NULL) {
+    bucket_locks[idx].unlock();
+    return result;
+  }
 
-      if ((result = find(chain, varid, hi, lo)) != NULL) {
-        bucket_locks[idx].unlock();
-        return result;
-      }
+  Node *n = (Node*)malloc(sizeof(Node));
 
-      Node *n = (Node*)malloc(sizeof(Node));
+  result = (bdd_node*)std::malloc(sizeof(bdd_node));
+  result->varid = varid;
+  result->hi = hi;
+  result->lo = lo;
 
-      result = (bdd_node*)std::malloc(sizeof(bdd_node));
-      result->varid = varid;
-      result->hi = hi;
-      result->lo = lo;
+  n->data = result;
+  add_to_front(array[idx], n);
+  bucket_locks[idx].unlock();
 
-      n->data = result;
-      add_to_front(array[idx], n);
-      bucket_locks[idx].unlock();
-
-      return result;
-    }
-};
+  return result;
+}
