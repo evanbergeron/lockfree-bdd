@@ -16,6 +16,8 @@ struct bdd {
   bdd_node *root;
 };
 
+static HashTable *uni;
+
 static bdd_node *BDD_TRUE;
 static bdd_node *BDD_FALSE;
 
@@ -52,7 +54,7 @@ bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
     return T;
   }
 
-  bdd_node *R = lookup_or_insert(min_varid, T, E);
+  bdd_node *R = uni->lookup_or_insert(min_varid, T, E);
 
   put_result(F, G, H, R);
 
@@ -93,10 +95,9 @@ bdd_node *bdd_not(bdd_node *a) {
 }
 
 bdd_node* ithvar(int i) {
-  return lookup_or_insert(i, BDD_TRUE, BDD_FALSE);
+  return uni->lookup_or_insert(i, BDD_TRUE, BDD_FALSE);
 }
 
-static HashTable *uni;
 
 /**
  * Initialize the BDD package
@@ -115,8 +116,8 @@ int bdd_init(int maxnodes, int cachesize) {
   BDD_FALSE->varid = std::numeric_limits<int>::max() - 1;
 
   memo_table_init(cachesize);
-  unique_table_init(maxnodes);
-  /* uni = new HashTable(maxnodes); */
+  /* unique_table_init(maxnodes); */
+  uni = new HashTable(maxnodes);
   return 0;
 }
 

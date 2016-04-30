@@ -35,6 +35,7 @@ int HashTable::hash(local_ut_key k) {
 }
 
 HashTable::HashTable(int maxnodes) {
+  num_buckets = maxnodes;
   array = (LinkedList**)std::malloc(sizeof(LinkedList*) * maxnodes);
   bucket_locks = (std::mutex*)std::malloc(sizeof(std::mutex) * maxnodes);
   for (int i = 0; i < maxnodes; i++)
@@ -44,7 +45,7 @@ HashTable::HashTable(int maxnodes) {
 bdd_node *HashTable::lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo) {
 
   local_ut_key k (varid, hi, lo);
-  int idx = hash(k) % 100;
+  int idx = hash(k) % num_buckets;
 
   bucket_locks[idx].lock();
 

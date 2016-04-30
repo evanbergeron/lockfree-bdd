@@ -17,6 +17,7 @@ class HashTable {
     int *arr;
     LinkedList **array;
     std::mutex *bucket_locks;
+    int num_buckets;
 
     int hash(local_ut_key k);
 
