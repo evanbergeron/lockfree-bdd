@@ -42,6 +42,23 @@ HashTable::HashTable(int maxnodes) {
     array[i] = newLinkedList();
 }
 
+bdd_node *HashTable::lookup(int varid, bdd_node *hi, bdd_node *lo) {
+  local_ut_key k (varid, hi, lo);
+  int idx = hash(k) % num_buckets;
+
+  bucket_locks[idx].lock();
+
+  LinkedList *chain = array[idx];
+  bdd_node *result;
+
+  if ((result = find(chain, varid, hi, lo)) != nullptr) {
+    bucket_locks[idx].unlock();
+    return result;
+  }
+  return nullptr;
+
+}
+
 bdd_node *HashTable::lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo) {
 
   local_ut_key k (varid, hi, lo);

@@ -9,15 +9,18 @@
 #include "bdd.h"
 #include "hash_table.h"
 #include "memo_table.h"
+#include "r_queue.h"
 #include "op_queue.h"
 #include "unique_table.h"
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
 #define OP_QUEUE_INITIAL_SIZE 16
+#define R_QUEUE_INITIAL_SIZE  16
 
 static HashTable *uni;
 static int num_varids;
 static op_queue **op_queues;
+static r_queue **r_queues;
 
 static bdd_node *BDD_TRUE;
 static bdd_node *BDD_FALSE;
@@ -92,6 +95,40 @@ bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
   return R;
 }
 
+void bfs_reduce() {
+  for (int varid = num_varids - 1; varid >= 0; varid--) {
+    bdd_node *to_reduce;
+    while ((to_reduce = r_queue_dequeue(r_queues[varid])) != nullptr) {
+      assert(to_reduce->is_forwarding == false);
+      if (to_reduce->lo->is_forwarding) {
+        to_reduce->lo = to_reduce->lo->lo;
+      }
+      if (to_reduce->hi->is_forwarding) {
+        to_reduce->hi = to_reduce->hi->hi;
+      }
+      if (to_reduce->hi == to_reduce->lo) {
+        to_reduce->is_forwarding = true;
+        return;
+      }
+      bdd_node *already_there;
+      if ((already_there = uni->lookup(to_reduce->varid,
+                                       to_reduce->hi,
+                                       to_reduce->lo)) != nullptr) {
+        // already in unique table
+        to_reduce->lo = already_there;
+        to_reduce->hi = already_there;
+        to_reduce->is_forwarding = true;
+        return;
+      } else {
+        // TODO should we be inserting the actual pointer into unique table?
+        // lookup_or_insert makes a new allocation
+        lookup_or_insert(to_reduce->varid, to_reduce->hi, to_reduce->lo);
+      }
+
+    }
+  }
+}
+
 void bfs_sift(int varid) {
   op_node *next_op;
   while ((next_op = op_queue_dequeue(op_queues[varid])) != nullptr) {
@@ -147,6 +184,8 @@ void bfs_sift(int varid) {
     new_node->varid = varid;
     new_node->is_forwarding = false;
 
+    r_queue_enqueue(r_queues[varid], new_node);
+
     // TODO later
     // lookup_or_insert(partially_done_table, (bdd_node*)next_op);
 
@@ -170,9 +209,12 @@ bdd_node *bfs_op(bool_op op, bdd_node *f, bdd_node *g) {
 
   op_queue_enqueue(op_queues[min_varid], new_op);
 
+  // Expansion phase
   for (int varid = min_varid; varid < num_varids; varid++) {
     bfs_sift(varid);
   }
+
+  bfs_reduce();
 
   return (bdd_node*)new_op;
 }
@@ -224,6 +266,10 @@ int bdd_init(int maxnodes, int cachesize, int num_vars) {
   op_queues = (op_queue**)malloc(sizeof(op_queue*) * num_vars); // TODO reconsider size
   for (int i = 0; i < num_vars; i++) {
     op_queues[i] = op_queue_init(OP_QUEUE_INITIAL_SIZE);
+  }
+  r_queues = (r_queue**)malloc(sizeof(r_queue*) * num_vars); // TODO reconsider size
+  for (int i = 0; i < num_vars; i++) {
+    r_queues[i] = r_queue_init(R_QUEUE_INITIAL_SIZE);
   }
   return 0;
 }
