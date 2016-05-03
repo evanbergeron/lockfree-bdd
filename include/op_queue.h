@@ -7,7 +7,7 @@
 
 #include "bdd.h"
 
-typedef struct op_queue op_queue;
+typedef struct ring_queue op_queue;
 
 /**
  * Initialize and return a pointer to an op queue.
