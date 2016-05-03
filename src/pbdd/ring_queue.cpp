@@ -1,0 +1,106 @@
+/**
+ * Operator queue
+ * Dynamically resizing ring-array work queue for operator nodes.
+ */
+
+#include <algorithm>
+#include <stdlib.h>
+#include <string.h>
+#include "ring_queue.h"
+
+#define RESIZE_FACTOR 2
+#define QUEUE_EMPTY(Q) (Q->head == Q->next)
+#define QUEUE_FULL(Q) (Q->head == (Q->next+1) % Q->size)
+#define QUEUE_SIZE(Q) ((Q->head <= Q->next) ? \
+                       (Q->next-Q->head) : \
+                       (Q->size-Q->head+Q->next))
+
+struct ring_queue {
+  void **queue;
+  int size;   // Size of the array
+  int head;   // Location of the head
+  int next;   // Location of the next insertion
+  int initial_size;
+};
+
+// Helper functions
+void resize(ring_queue *queue, int newsize);
+
+/**
+ * Initialize and return a pointer to an op queue.
+ */
+ring_queue *ring_queue_init(int initial_size) {
+  // Initialize queue struct
+  ring_queue *queue = (ring_queue *)malloc(sizeof(ring_queue));
+
+  // Initialize array
+  queue->queue = (void **)malloc(sizeof(void *) * initial_size);
+      
+  // Initialize fields
+  queue->size = initial_size;
+  queue->head = 0;
+  queue->next = 0;
+  queue->initial_size = initial_size;
+
+  return queue;
+}
+
+/**
+ * Insert an op node into the op queue
+ */
+void ring_queue_enqueue(ring_queue *queue, void *node) {
+  if (QUEUE_FULL(queue)) {
+    resize(queue, queue->size * RESIZE_FACTOR);
+  }
+
+  queue->queue[queue->next] = node;
+  queue->next++;
+
+  if (queue->next == queue->size) {
+    queue->next = 0;
+  }
+}
+
+/**
+ * Dequeue an op node from the op queue. Return NULL if empty.
+ */
+void *ring_queue_dequeue(ring_queue *queue) {
+  if (QUEUE_EMPTY(queue)) {
+    return nullptr;
+  }
+
+  void *elem = queue->queue[queue->head];
+
+  queue->head++;
+
+  if (queue->head == queue->size) {
+    queue->head = 0;
+  }
+
+  if (QUEUE_SIZE(queue) < (queue->size / 4) && queue->size > queue->initial_size) {
+    resize(queue, std::max(queue->size / RESIZE_FACTOR, queue->initial_size));
+  }
+
+  return elem;
+}
+
+/**
+ * Resize the queue to newsize
+ */
+void resize(ring_queue *queue, int newsize) {
+  void **new_queue = (void **)malloc(sizeof(void *) * newsize);
+
+  if (queue->head <= queue->next) {
+    memcpy(new_queue, queue->queue + queue->head, (queue->next - queue->head)*sizeof(void *));
+  } else {
+    memcpy(new_queue, queue->queue + queue->head, (queue->size - queue->head)*sizeof(void *));
+    memcpy(new_queue + (queue->size - queue->head), queue->queue, queue->next*sizeof(void *));
+  }
+
+  free(queue->queue);
+  queue->queue = new_queue;
+  queue->next = QUEUE_SIZE(queue);
+  queue->head = 0;
+  queue->size = newsize;
+}
+

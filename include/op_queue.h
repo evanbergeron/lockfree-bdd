@@ -2,10 +2,10 @@
  * Work queue for op nodes in bfs
  */
 
-#include "bdd.h"
-
 #ifndef OP_QUEUE_H
 #define OP_QUEUE_H
+
+#include "bdd.h"
 
 typedef struct op_queue op_queue;
 

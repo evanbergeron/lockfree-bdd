@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "bdd.h"
 #include "hash_table.h"
 #include "memo_table.h"
 #include "op_queue.h"
