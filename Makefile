@@ -2,7 +2,7 @@ CC := g++
 SRCDIR := src
 BUILDDIR := build
 TARGET := bin/bdd
- 
+
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
@@ -28,5 +28,9 @@ nqueens:
 simple:
 	make
 	$(CC) $(CFLAGS) examples/simple.cpp $(PBDD) $(INC) $(LIB) -o bin/simple
+
+tester:
+	make
+	$(CC) $(CFLAGS) test/test_all.cpp $(PBDD) $(INC) $(LIB) -o bin/test_all
 
 .PHONY: clean
