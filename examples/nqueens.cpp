@@ -173,7 +173,8 @@ bdd_node *nqueens(int n) {
   return result;
 }
 
-int main() {
-  bdd_graphviz(nqueens(4));
+int main(int argc, char* argv[]) {
+  bdd_node *solutions = nqueens(atoi(argv[1]));
+  print_allsat(solutions);
   return 0;
 }
