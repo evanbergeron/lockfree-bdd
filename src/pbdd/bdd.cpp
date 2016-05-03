@@ -53,44 +53,55 @@ void bfs_sift(int varid) {
   while ((next_op = op_queue_dequeue(op_queues[varid])) != nullptr) {
 
     // Handle lo case
-    int lo_min_varid = std::min(next_op->f->lo->varid, next_op->g->lo->varid);
     // TODO this should be a lookup_or_insert
-    bdd_node *lo_terminal = bfs_op_terminal(next_op->op,
-                              next_op->f->lo,
-                              next_op->g->lo);
+
+    bool_op lo_op = next_op->op;
+    bdd_node *lo_f = (next_op->f->varid == varid) ? next_op->f->lo : next_op->f;
+    bdd_node *lo_g = (next_op->g->varid == varid) ? next_op->g->lo : next_op->g;
+
+    bdd_node *lo_terminal = bfs_op_terminal(lo_op, lo_f, lo_g);
+
     op_node *op_lo;
     if (lo_terminal != nullptr) {
       // TODO this is tricky
       op_lo = (op_node*)lo_terminal;
     } else {
       op_lo = (op_node*)malloc(sizeof(op_node*));
-      op_lo->op = next_op->op;
-      op_lo->f = next_op->f->lo;
-      op_lo->g = next_op->g->lo;
+      op_lo->op = lo_op;
+      op_lo->f = lo_f;
+      op_lo->g = lo_g;
+      int lo_min_varid = std::min(op_lo->f->varid, op_lo->g->varid);
       op_queue_enqueue(op_queues[lo_min_varid], op_lo);
     }
 
     // Handle hi case
-    int hi_min_varid = std::min(next_op->f->hi->varid, next_op->g->hi->varid);
+
+    bool_op hi_op = next_op->op;
+    bdd_node *hi_f = (next_op->f->varid == varid) ? next_op->f->hi : next_op->f;
+    bdd_node *hi_g = (next_op->g->varid == varid) ? next_op->g->hi : next_op->g;
+
+    bdd_node *hi_terminal = bfs_op_terminal(hi_op, hi_f, hi_g);
+
     // TODO this should be a lookup_or_insert
-    bdd_node *hi_terminal = bfs_op_terminal(next_op->op,
-                              next_op->f->hi,
-                              next_op->g->hi);
     op_node *op_hi;
     if (hi_terminal != nullptr) {
       // TODO this is tricky
       op_hi = (op_node*)hi_terminal;
     } else {
       op_hi = (op_node*)malloc(sizeof(op_node*));
-      op_hi->op = next_op->op;
-      op_hi->f = next_op->f->hi;
-      op_hi->g = next_op->g->hi;
+      op_hi->op = hi_op;
+      op_hi->f = hi_f;
+      op_hi->g = hi_g;
+      int hi_min_varid = std::min(op_hi->f->varid, op_hi->g->varid);
       op_queue_enqueue(op_queues[hi_min_varid], op_hi);
     }
 
     // TODO moar cancer
-    next_op->f = (bdd_node*)op_lo;
-    next_op->g = (bdd_node*)op_hi;
+    bdd_node *new_node = (bdd_node *)next_op;
+    new_node->lo = (bdd_node *)op_lo;
+    new_node->hi = (bdd_node *)op_hi;
+    new_node->varid = varid;
+    new_node->is_forwarding = false;
 
     // TODO later
     // lookup_or_insert(partially_done_table, (bdd_node*)next_op);
@@ -119,6 +130,7 @@ bdd_node *bfs_op(bool_op op, bdd_node *f, bdd_node *g) {
     bfs_sift(varid);
   }
 
+  return (bdd_node*)new_op;
 }
 
 /**
@@ -132,7 +144,7 @@ bdd_node *bdd_and(bdd_node *a, bdd_node *b) {
   return bdd_apply(a, b, OP_AND);
 }
 
-bdd_node *bdd_or (bdd_node *a, bdd_node *b) {
+bdd_node *bdd_or(bdd_node *a, bdd_node *b) {
   return bdd_apply(a, b, OP_OR);
 }
 
