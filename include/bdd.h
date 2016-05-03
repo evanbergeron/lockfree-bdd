@@ -21,6 +21,12 @@ struct bdd_node {
   bdd_node *hi;
 };
 
+struct op_node {
+  int op;
+  bdd_node *f;
+  bdd_node *g;
+};
+
 /**
  * Initialize the BDD package
  * nodenum - max number of nodes to use in the package
