@@ -40,12 +40,55 @@ bdd_node *bfs_op_terminal(bool_op op, bdd_node *f, bdd_node *g) {
       }
       break;
     case OP_NOT:
+      assert(false);
       break;
     default:
       return nullptr;
 
   }
   return nullptr;
+}
+
+bdd_node *ite(bdd_node *F, bdd_node *G, bdd_node *H) {
+  // base cases
+  if (F == BDD_TRUE) {
+    return G;
+  }
+  if (F == BDD_FALSE) {
+    return H;
+  }
+  if (G == BDD_TRUE && H == BDD_FALSE) {
+    return F;
+  }
+
+  // check memo table
+  bdd_node *cached_result = get_result(F, G, H);
+  if (cached_result != nullptr) {
+    return cached_result;
+  }
+
+  int min_varid = MIN3(F->varid, G->varid, H->varid);
+  bdd_node *Fv = F->varid == min_varid ? F->hi : F;
+  bdd_node *Gv = G->varid == min_varid ? G->hi : G;
+  bdd_node *Hv = H->varid == min_varid ? H->hi : H;
+  bdd_node *Fvn = F->varid == min_varid ? F->lo : F;
+  bdd_node *Gvn = G->varid == min_varid ? G->lo : G;
+  bdd_node *Hvn = H->varid == min_varid ? H->lo : H;
+
+  bdd_node *T;
+  bdd_node *E;
+  T = ite(Fv, Gv, Hv);
+  E = ite(Fvn, Gvn, Hvn);
+
+  if (T == E) {
+    return T;
+  }
+
+  bdd_node *R = uni->lookup_or_insert(min_varid, T, E);
+
+  put_result(F, G, H, R);
+
+  return R;
 }
 
 void bfs_sift(int varid) {
@@ -149,7 +192,7 @@ bdd_node *bdd_or(bdd_node *a, bdd_node *b) {
 }
 
 bdd_node *bdd_not(bdd_node *a) {
-  return bdd_apply(a, a, OP_NOT);
+  return ite(a, BDD_FALSE, BDD_TRUE);
 }
 
 // TODO maybe change to next var?
