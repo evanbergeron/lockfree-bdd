@@ -1,53 +1,148 @@
-#include <stdlib.h>
 #include <cassert>
-#include <limits>
 #include <iostream>
-#include <unordered_map>
-#include <string>
-#include <vector>
+#include <limits>
 #include <map>
-#include "unique_table.h"
-#include "memo_table.h"
+#include <stdlib.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include "hash_table.h"
+#include "memo_table.h"
+#include "op_queue.h"
+#include "unique_table.h"
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
+#define OP_QUEUE_INITIAL_SIZE 16
 
 static HashTable *uni;
+static int num_varids;
+static op_queue **op_queues;
 
 static bdd_node *BDD_TRUE;
 static bdd_node *BDD_FALSE;
+
+bdd_node *bfs_op_terminal(bool_op op, bdd_node *f, bdd_node *g) {
+  switch (op) {
+    case OP_AND:
+      if (f == BDD_FALSE || g == BDD_FALSE) {
+        return BDD_FALSE;
+      }
+      if (f == g) { // TODO double check
+        return f;
+      }
+      break;
+    case OP_OR:
+      if (f == BDD_TRUE || g == BDD_TRUE) {
+        return BDD_TRUE;
+      }
+      if (f == g) { // TODO double check
+        return f;
+      }
+      break;
+    case OP_NOT:
+      break;
+    default:
+      return nullptr;
+
+  }
+  return nullptr;
+}
+
+void bfs_sift(int varid) {
+  op_node *next_op;
+  while ((next_op = op_queue_dequeue(op_queues[varid])) != nullptr) {
+
+    // Handle lo case
+    int lo_min_varid = std::min(next_op->f->lo->varid, next_op->g->lo->varid);
+    // TODO this should be a lookup_or_insert
+    bdd_node *lo_terminal = bfs_op_terminal(next_op->op,
+                              next_op->f->lo,
+                              next_op->g->lo);
+    op_node *op_lo;
+    if (lo_terminal != nullptr) {
+      // TODO this is tricky
+      op_lo = (op_node*)lo_terminal;
+    } else {
+      op_lo = (op_node*)malloc(sizeof(op_node*));
+      op_lo->op = next_op->op;
+      op_lo->f = next_op->f->lo;
+      op_lo->g = next_op->g->lo;
+      op_queue_enqueue(op_queues[lo_min_varid], op_lo);
+    }
+
+    // Handle hi case
+    int hi_min_varid = std::min(next_op->f->hi->varid, next_op->g->hi->varid);
+    // TODO this should be a lookup_or_insert
+    bdd_node *hi_terminal = bfs_op_terminal(next_op->op,
+                              next_op->f->hi,
+                              next_op->g->hi);
+    op_node *op_hi;
+    if (hi_terminal != nullptr) {
+      // TODO this is tricky
+      op_hi = (op_node*)hi_terminal;
+    } else {
+      op_hi = (op_node*)malloc(sizeof(op_node*));
+      op_hi->op = next_op->op;
+      op_hi->f = next_op->f->hi;
+      op_hi->g = next_op->g->hi;
+      op_queue_enqueue(op_queues[hi_min_varid], op_hi);
+    }
+
+    // TODO moar cancer
+    next_op->f = (bdd_node*)op_lo;
+    next_op->g = (bdd_node*)op_hi;
+
+    // TODO later
+    // lookup_or_insert(partially_done_table, (bdd_node*)next_op);
+
+  }
+}
+
+bdd_node *bfs_op(bool_op op, bdd_node *f, bdd_node *g) {
+
+  bdd_node *terminal_result = bfs_op_terminal(op, f, g);
+  if (terminal_result != nullptr) {
+    return terminal_result;
+  }
+
+  int min_varid = std::min(f->varid, g->varid);
+
+  // TODO change to lookup_or_insert in op node unique table
+  op_node *new_op = (op_node*)malloc(sizeof(op_node));
+  new_op->op = op;
+  new_op->f = f;
+  new_op->g = g;
+
+  op_queue_enqueue(op_queues[min_varid], new_op);
+
+  for (int varid = min_varid; varid < num_varids; varid++) {
+    bfs_sift(varid);
+  }
+
+}
 
 /**
  * Apply a boolean operation on a and b
  */
 bdd_node *bdd_apply(bdd_node *a, bdd_node *b, bool_op op) {
-  bdd_node *result;
-  switch (op) {
-    case AND:
-      break;
-    case OR:
-      break;
-    case NOT:
-      break;
-    default:
-      return NULL;
-  }
-  return result;
+  return bfs_op(op, a, b);
 }
 
 bdd_node *bdd_and(bdd_node *a, bdd_node *b) {
-  return bdd_apply(a, b, bool_op::AND);
+  return bdd_apply(a, b, OP_AND);
 }
 
 bdd_node *bdd_or (bdd_node *a, bdd_node *b) {
-  return bdd_apply(a, b, bool_op::OR);
+  return bdd_apply(a, b, OP_OR);
 }
 
 bdd_node *bdd_not(bdd_node *a) {
-  return bdd_apply(a, a, bool_op::NOT);
+  return bdd_apply(a, a, OP_NOT);
 }
 
+// TODO maybe change to next var?
 bdd_node* ithvar(int i) {
+  assert(i < num_varids);
   return uni->lookup_or_insert(i, BDD_TRUE, BDD_FALSE);
 }
 
@@ -57,18 +152,23 @@ bdd_node* ithvar(int i) {
  * nodenum - max number of nodes to use in the package
  * cachesize - max number of elements to cache
  */
-int bdd_init(int maxnodes, int cachesize) {
+int bdd_init(int maxnodes, int cachesize, int num_vars) {
   // Initialize constants true and false
   BDD_TRUE = (bdd_node *)malloc(sizeof(bdd_node));
   BDD_FALSE = (bdd_node *)malloc(sizeof(bdd_node));
   if (BDD_TRUE == NULL || BDD_FALSE == NULL) {
     return 1;
   }
+  num_varids = num_vars;
   BDD_TRUE->varid = std::numeric_limits<int>::max();
   BDD_FALSE->varid = std::numeric_limits<int>::max() - 1;
   memo_table_init(cachesize);
   /* unique_table_init(maxnodes); */
   uni = new HashTable(maxnodes);
+  op_queues = (op_queue**)malloc(sizeof(op_queue*) * num_vars); // TODO reconsider size
+  for (int i = 0; i < num_vars; i++) {
+    op_queues[i] = op_queue_init(OP_QUEUE_INITIAL_SIZE);
+  }
   return 0;
 }
 

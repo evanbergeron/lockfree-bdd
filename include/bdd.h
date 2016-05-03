@@ -7,22 +7,24 @@
 #define BDD_H
 
 #include <map>
+#include <stdint.h>
 #include <vector>
 
-enum bool_op {
-  AND,
-  OR,
-  NOT,
-};
+typedef uint32_t bool_op;
+
+#define OP_AND  0u
+#define OP_OR   1u
+#define OP_NOT  2u
 
 struct bdd_node {
-  int varid;
+  unsigned is_forwarding:1;
+  unsigned int varid:31;
   bdd_node *lo;
   bdd_node *hi;
 };
 
 struct op_node {
-  int op;
+  bool_op op;
   bdd_node *f;
   bdd_node *g;
 };
