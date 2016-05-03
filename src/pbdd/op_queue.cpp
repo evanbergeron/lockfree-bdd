@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MIN_SIZE 8
 #define RESIZE_FACTOR 2
 #define QUEUE_EMPTY(Q) (Q->head == Q->next)
 #define QUEUE_FULL(Q) (Q->head == (Q->next+1) % Q->size)
@@ -20,6 +19,7 @@ struct op_queue {
   int size;   // Size of the array
   int head;   // Location of the head
   int next;   // Location of the next insertion
+  int initial_size;
 };
 
 // Helper functions
@@ -39,6 +39,7 @@ op_queue *op_queue_init(int initial_size) {
   queue->size = initial_size;
   queue->head = 0;
   queue->next = 0;
+  queue->initial_size = initial_size;
 
   return queue;
 }
@@ -67,17 +68,19 @@ op_node *op_queue_dequeue(op_queue *queue) {
     return nullptr;
   }
 
-  queue->next--;
+  op_node *elem = queue->queue[queue->head];
 
-  if (queue->next == -1) {
-    queue->next = queue->size - 1;
+  queue->head++;
+
+  if (queue->head == queue->size) {
+    queue->head = 0;
   }
 
-  if (QUEUE_SIZE(queue) < (queue->size / 4) && queue->size > MIN_SIZE) {
-    resize(queue, std::max(queue->size / RESIZE_FACTOR, MIN_SIZE));
+  if (QUEUE_SIZE(queue) < (queue->size / 4) && queue->size > queue->initial_size) {
+    resize(queue, std::max(queue->size / RESIZE_FACTOR, queue->initial_size));
   }
 
-  return queue->queue[queue->next];
+  return elem;
 }
 
 /**
