@@ -7,10 +7,10 @@
 #include <unordered_map>
 #include <vector>
 #include "bdd.h"
-#include "hash_table.h"
 #include "memo_table.h"
 #include "r_queue.h"
 #include "op_queue.h"
+#include "op_unique_table.h"
 #include "unique_table.h"
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
@@ -18,6 +18,7 @@
 #define R_QUEUE_INITIAL_SIZE  16
 
 static HashTable *uni;
+static OpUniqueTable *op_uni;
 static int num_varids;
 static op_queue **op_queues;
 static r_queue **r_queues;
@@ -263,6 +264,7 @@ int bdd_init(int maxnodes, int cachesize, int num_vars) {
   memo_table_init(cachesize);
   /* unique_table_init(maxnodes); */
   uni = new HashTable(maxnodes);
+  op_uni = new OpUniqueTable(maxnodes);
   op_queues = (op_queue**)malloc(sizeof(op_queue*) * num_vars); // TODO reconsider size
   for (int i = 0; i < num_vars; i++) {
     op_queues[i] = op_queue_init(OP_QUEUE_INITIAL_SIZE);
