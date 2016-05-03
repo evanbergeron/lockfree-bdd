@@ -146,7 +146,7 @@ bdd_node *ndiag_constraints(int n) {
 void make_board(int n) {
 
   // Probably big enough?
-  bdd_init(n * n * n * n, n * n * n * n);
+  bdd_init(n * n * n * n, n * n * n * n, n * n);
 
   /*
    * Make variables for each board cell.
