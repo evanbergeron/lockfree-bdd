@@ -7,7 +7,7 @@
 #ifndef OP_QUEUE_H
 #define OP_QUEUE_H
 
-struct op_queue;
+typedef struct op_queue op_queue;
 
 /**
  * Initialize and return a pointer to an op queue.
