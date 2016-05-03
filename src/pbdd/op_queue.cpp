@@ -98,8 +98,8 @@ void resize(op_queue *queue, int newsize) {
 
   free(queue->queue);
   queue->queue = new_queue;
-  queue->head = 0;
   queue->next = QUEUE_SIZE(queue);
+  queue->head = 0;
   queue->size = newsize;
 }
 
