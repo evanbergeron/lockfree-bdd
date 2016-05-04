@@ -1,31 +1,29 @@
-/**
- * Unique table for the bdd
- */
-
-#include <vector>
+#include <mutex>
 #include "bdd.h"
 
-#ifndef UNIQUE_TABLE_H
-#define UNIQUE_TABLE_H
+typedef std::tuple<int, bdd_node*, bdd_node*> local_ut_key;
 
-/**
- * Lookup or insert a triple (v,lo,hi) into the unique table
- */
-bdd_node *lookup_or_insert(int varid, bdd_node *lo, bdd_node *hi);
+struct Node {
+  bdd_node *data;
+  Node *next;
+};
 
-/**
- * Clear the unique table
- */
-void clear_table();
+struct LinkedList {
+  Node *head;
+};
 
-/**
- * Get all the nodes in the graph
- */
-std::vector<bdd_node *> all_nodes();
+class HashTable {
+  private:
+    int *arr;
+    LinkedList **array;
+    std::mutex *bucket_locks;
+    int num_buckets;
 
-/**
- * Initialize the unique table
- */
-void unique_table_init(int size);
+    int hash(local_ut_key k);
 
-#endif /* UNIQUE_TABLE_H */
+  public:
+    HashTable(int maxnodes);
+    bdd_node *lookup(int varid, bdd_node *hi, bdd_node *lo);
+    void insert(bdd_node *ptr);
+    bdd_node *lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo);
+};
