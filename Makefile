@@ -6,7 +6,8 @@ TARGET := bin/bdd
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS := -O2 -g -Wall -Wextra -Wpointer-arith -Wconversion -std=c++11
+WFLAGS := -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef -Wno-unused -Wpointer-arith -Wconversion 
+CFLAGS := -O2 -g -std=c++11 $(WFLAGS)
 LIB := -L lib
 INC := -I include
 PBDD := build/pbdd/*.o
