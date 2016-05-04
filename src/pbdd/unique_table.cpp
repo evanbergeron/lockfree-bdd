@@ -30,11 +30,11 @@ LinkedList *newLinkedList() {
   return l;
 }
 
-int HashTable::hash(local_ut_key k) {
-  int h =  std::get<0>(k)
-          ^ reinterpret_cast<std::uintptr_t>(std::get<1>(k))
-          ^ reinterpret_cast<std::uintptr_t>(std::get<2>(k));
-  return h > 0 ? h : -h;
+unsigned HashTable::hash(local_ut_key k) {
+  unsigned h = (unsigned) std::get<0>(k)
+          ^ (unsigned) reinterpret_cast<std::uintptr_t>(std::get<1>(k))
+          ^ (unsigned) reinterpret_cast<std::uintptr_t>(std::get<2>(k));
+  return h;
 }
 
 HashTable::HashTable(int maxnodes) {

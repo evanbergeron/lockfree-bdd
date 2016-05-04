@@ -26,7 +26,7 @@ class HashTable {
     std::mutex *bucket_locks;
     int num_buckets;
 
-    int hash(local_ut_key k);
+    unsigned hash(local_ut_key k);
 
   public:
     HashTable(int maxnodes);
