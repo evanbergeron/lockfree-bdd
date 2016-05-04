@@ -10,6 +10,6 @@ class OpUniqueTable {
 
   public:
     OpUniqueTable(int maxnodes);
-    op_node *lookup(bool_op op, bdd_node *hi, bdd_node *lo);
-    op_node *lookup_or_insert(bool_op op, bdd_node *hi, bdd_node *lo);
+    op_node *lookup(bool_op op, bdd_node *f, bdd_node *g);
+    op_node *lookup_or_insert(bool_op op, bdd_node *f, bdd_node *g);
 };
