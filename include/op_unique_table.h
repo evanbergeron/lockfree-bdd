@@ -1,5 +1,5 @@
 #include <mutex>
-#include "hash_table.h"
+#include "unique_table.h"
 #include "bdd.h"
 
 typedef std::tuple<int, bdd_node*, bdd_node*> local_ut_key;

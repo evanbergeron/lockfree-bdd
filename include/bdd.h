@@ -16,6 +16,8 @@ typedef uint32_t bool_op;
 #define OP_OR   1u
 #define OP_NOT  2u
 
+#define VARID_MASK 0x7fffffff;
+
 struct bdd_node {
   unsigned int is_forwarding:1;
   unsigned int varid:31;

@@ -189,7 +189,7 @@ void bfs_sift(int varid) {
     bdd_node *new_node = (bdd_node *)next_op;
     new_node->lo = (bdd_node *)op_lo;
     new_node->hi = (bdd_node *)op_hi;
-    new_node->varid = varid;
+    new_node->varid = varid & VARID_MASK;
     new_node->is_forwarding = 0;
 
     r_queue_enqueue(r_queues[varid], new_node);
