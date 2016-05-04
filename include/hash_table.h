@@ -24,6 +24,6 @@ class HashTable {
   public:
     HashTable(int maxnodes);
     bdd_node *lookup(int varid, bdd_node *hi, bdd_node *lo);
-    bdd_node *insert(bdd_node *ptr);
+    void insert(bdd_node *ptr);
     bdd_node *lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo);
 };

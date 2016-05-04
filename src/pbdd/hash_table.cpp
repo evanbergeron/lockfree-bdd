@@ -57,7 +57,7 @@ bdd_node *HashTable::lookup(int varid, bdd_node *hi, bdd_node *lo) {
   return result;
 }
 
-bdd_node *HashTable::insert(bdd_node *node) {
+void HashTable::insert(bdd_node *node) {
   int varid = node->varid;
   bdd_node *hi = node->hi;
   bdd_node *lo = node->lo;
