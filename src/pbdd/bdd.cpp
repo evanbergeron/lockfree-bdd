@@ -133,7 +133,6 @@ void bfs_reduce() {
         to_reduce->is_forwarding = false;
         uni->insert(to_reduce);
       }
-
     }
   }
 }
@@ -225,7 +224,11 @@ bdd_node *bfs_op(bool_op op, bdd_node *f, bdd_node *g) {
 
   bfs_reduce();
 
-  return (bdd_node*)new_op;
+  bdd_node *result = (bdd_node*)new_op;
+  if (result->is_forwarding) {
+    return result->lo;
+  }
+  return result;
 }
 
 /**
