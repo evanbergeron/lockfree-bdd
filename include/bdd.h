@@ -17,7 +17,7 @@ typedef uint32_t bool_op;
 #define OP_NOT  2u
 
 struct bdd_node {
-  unsigned is_forwarding:1;
+  unsigned int is_forwarding:1;
   unsigned int varid:31;
   bdd_node *lo;
   bdd_node *hi;

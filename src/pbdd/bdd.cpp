@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -31,16 +32,22 @@ bdd_node *bfs_op_terminal(bool_op op, bdd_node *f, bdd_node *g) {
     case OP_AND:
       if (f == BDD_FALSE || g == BDD_FALSE) {
         return BDD_FALSE;
-      }
-      if (f == g) { // TODO double check
+      } else if (f == g) { // TODO double check
+        return f;
+      } else if (f == BDD_TRUE) {
+        return g;
+      } else if (g == BDD_TRUE) {
         return f;
       }
       break;
     case OP_OR:
       if (f == BDD_TRUE || g == BDD_TRUE) {
         return BDD_TRUE;
-      }
-      if (f == g) { // TODO double check
+      } else if (f == g) { // TODO double check
+        return f;
+      } else if (f == BDD_FALSE) {
+        return g;
+      } else if (g == BDD_FALSE) {
         return f;
       }
       break;
@@ -100,7 +107,7 @@ void bfs_reduce() {
   for (int varid = num_varids - 1; varid >= 0; varid--) {
     bdd_node *to_reduce;
     while ((to_reduce = r_queue_dequeue(r_queues[varid])) != nullptr) {
-      assert(to_reduce->is_forwarding == false);
+      assert(to_reduce->is_forwarding == 0);
       if (to_reduce->lo->is_forwarding) {
         to_reduce->lo = to_reduce->lo->lo;
       }
@@ -108,22 +115,23 @@ void bfs_reduce() {
         to_reduce->hi = to_reduce->hi->hi;
       }
       if (to_reduce->hi == to_reduce->lo) {
-        to_reduce->is_forwarding = true;
+        to_reduce->is_forwarding = 1;
         return;
       }
-      bdd_node *already_there;
-      if ((already_there = uni->lookup(to_reduce->varid,
+      bdd_node *already_there = uni->lookup(to_reduce->varid,
                                        to_reduce->hi,
-                                       to_reduce->lo)) != nullptr) {
+                                       to_reduce->lo);
+      if (already_there != nullptr) {
         // already in unique table
         to_reduce->lo = already_there;
         to_reduce->hi = already_there;
-        to_reduce->is_forwarding = true;
+        to_reduce->is_forwarding = 1;
         return;
       } else {
         // TODO should we be inserting the actual pointer into unique table?
         // lookup_or_insert makes a new allocation
-        lookup_or_insert(to_reduce->varid, to_reduce->hi, to_reduce->lo);
+        to_reduce->is_forwarding = false;
+        uni->insert(to_reduce);
       }
 
     }
@@ -148,7 +156,7 @@ void bfs_sift(int varid) {
       // TODO this is tricky
       op_lo = (op_node*)lo_terminal;
     } else {
-      op_lo = (op_node*)malloc(sizeof(op_node*));
+      op_lo = (op_node*)malloc(sizeof(op_node));
       op_lo->op = lo_op;
       op_lo->f = lo_f;
       op_lo->g = lo_g;
@@ -170,7 +178,7 @@ void bfs_sift(int varid) {
       // TODO this is tricky
       op_hi = (op_node*)hi_terminal;
     } else {
-      op_hi = (op_node*)malloc(sizeof(op_node*));
+      op_hi = (op_node*)malloc(sizeof(op_node));
       op_hi->op = hi_op;
       op_hi->f = hi_f;
       op_hi->g = hi_g;
@@ -183,7 +191,7 @@ void bfs_sift(int varid) {
     new_node->lo = (bdd_node *)op_lo;
     new_node->hi = (bdd_node *)op_hi;
     new_node->varid = varid;
-    new_node->is_forwarding = false;
+    new_node->is_forwarding = 0;
 
     r_queue_enqueue(r_queues[varid], new_node);
 
