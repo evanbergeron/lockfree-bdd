@@ -66,7 +66,6 @@ void HashTable::insert(bdd_node *node) {
   int idx = hash(k) % num_buckets;
 
   bucket_locks[idx].lock();
-  LinkedList *chain = array[idx];
 
   Node *n = (Node*)malloc(sizeof(Node));
   n->next = nullptr;
@@ -94,7 +93,7 @@ bdd_node *HashTable::lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo) {
   Node *n = (Node*)malloc(sizeof(Node));
 
   result = (bdd_node*)std::malloc(sizeof(bdd_node));
-  result->varid = varid;
+  result->varid = varid & VARID_MASK;
   result->hi = hi;
   result->lo = lo;
 
