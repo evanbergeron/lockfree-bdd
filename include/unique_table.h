@@ -1,3 +1,10 @@
+/**
+ * Unique table for bdd nodes and op nodes
+ */
+
+#ifndef UNIQUE_TABLE_H
+#define UNIQUE_TABLE_H
+
 #include <mutex>
 #include "bdd.h"
 
@@ -27,3 +34,5 @@ class HashTable {
     void insert(bdd_node *ptr);
     bdd_node *lookup_or_insert(int varid, bdd_node *hi, bdd_node *lo);
 };
+
+#endif /* UNIQUE_TABLE_H */
