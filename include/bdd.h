@@ -30,6 +30,9 @@ struct op_node {
   bdd_node *g;
 };
 
+bdd_ptr BDD_TRUE;
+bdd_ptr BDD_FALSE;
+
 /**
  * Initialize the BDD package
  * nodenum - max number of nodes to use in the package
