@@ -43,12 +43,5 @@ bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_or (bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_not(bdd_ptr a);
 bdd_ptr ithvar(int i);
-void bdd_graphviz(bdd_node *root);
-
-std::vector<std::map<int, bool>> *allsat(bdd_node *fn);
-void print_sat(std::map<int, bool> &assignments);
-void print_allsat(bdd_node *fn);
-
-void print_stats();
 
 #endif /* BDD_H */
