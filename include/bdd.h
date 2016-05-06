@@ -30,8 +30,8 @@ struct op_node {
   bdd_node *g;
 };
 
-bdd_ptr BDD_TRUE;
-bdd_ptr BDD_FALSE;
+extern bdd_ptr BDD_TRUE;
+extern bdd_ptr BDD_FALSE;
 
 /**
  * Initialize the BDD package

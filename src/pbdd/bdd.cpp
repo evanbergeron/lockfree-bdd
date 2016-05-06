@@ -6,6 +6,9 @@
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
 
+bdd_ptr BDD_TRUE;
+bdd_ptr BDD_FALSE;
+
 bdd_ptr get_hi(bdd *F) {
   return unpack_bddptr(F->hi);
 }
