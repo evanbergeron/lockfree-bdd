@@ -7,7 +7,7 @@ SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := -O2 -g -Wall -Wextra -Wpointer-arith -Wconversion -std=c++11 -march=native
-LIB := -L lib
+LIB := -L lib -lpthread
 INC := -I include
 PBDD := build/pbdd/*.o
 
