@@ -21,6 +21,14 @@ bool operator ==(const bdd_ptr x, const bdd_ptr y) {
   return BDD_EQ(x, y);
 }
 
+bdd_ptr get_hi(bdd_ptr f) {
+  return unpack_bddptr(bddptr2cptr(f)->lo);
+}
+
+bdd_ptr get_lo(bdd_ptr f) {
+  return unpack_bddptr(bddptr2cptr(f)->lo);
+}
+
 /** Globals */
 static bdd_vars *bdds = NULL;      // The chained arrays
 static uint16_t num_vars = 0u;     // Number of variables (max varid == num_vars-1)
