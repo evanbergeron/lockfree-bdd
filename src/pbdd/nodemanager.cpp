@@ -83,6 +83,7 @@ bdd_ptr cptr2bddptr(bdd *b) {
   bdd_ptr result;
   result.varid = b->varid;
   // TODO how to cleanly get idx?
+  exit(0);
 }
 
 bdd_ptr unpack_bddptr(bdd_ptr_packed b) {
