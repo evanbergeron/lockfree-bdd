@@ -4,10 +4,14 @@
 #include "nodemanager.h"
 #include "op_queue.h"
 
+#define DFS
+
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
 
 bdd_ptr BDD_TRUE;
 bdd_ptr BDD_FALSE;
+bdd *BDD_TRUE_ADDR;
+bdd *BDD_FALSE_ADDR;
 
 bdd_ptr get_hi(bdd *F) {
   return unpack_bddptr(F->hi);
@@ -97,5 +101,24 @@ void bdd_init(int maxnodes, int cachesize, int num_vars) {
   BDD_TRUE.idx = UINT32_MAX;
   BDD_FALSE.varid = UINT16_MAX - 1;
   BDD_FALSE.idx = UINT32_MAX;
+
+  uint32_t magic_num = 777777;
+
+  BDD_FALSE_ADDR = (bdd *)malloc(sizeof(bdd));
+  BDD_FALSE_ADDR->lo.varid = magic_num;
+  BDD_FALSE_ADDR->lo.idx = magic_num;
+  BDD_FALSE_ADDR->hi.varid = magic_num;
+  BDD_FALSE_ADDR->hi.idx = magic_num;
+  BDD_FALSE_ADDR->varid = BDD_FALSE.varid;
+  BDD_FALSE_ADDR->refcount = UINT16_MAX;
+
+  BDD_TRUE_ADDR  = (bdd *)malloc(sizeof(bdd));
+  BDD_TRUE_ADDR->lo.varid = magic_num;
+  BDD_TRUE_ADDR->lo.idx = magic_num;
+  BDD_TRUE_ADDR->hi.varid = magic_num;
+  BDD_TRUE_ADDR->hi.idx = magic_num;
+  BDD_TRUE_ADDR->varid = BDD_TRUE.varid;
+  BDD_TRUE_ADDR->refcount = UINT16_MAX;
+
   node_manager_init(num_vars);
 }

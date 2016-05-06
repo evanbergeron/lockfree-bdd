@@ -32,6 +32,8 @@ struct op_node {
 
 extern bdd_ptr BDD_TRUE;
 extern bdd_ptr BDD_FALSE;
+extern bdd *BDD_TRUE_ADDR;
+extern bdd *BDD_FALSE_ADDR;
 
 /**
  * Initialize the BDD package

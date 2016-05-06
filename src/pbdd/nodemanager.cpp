@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "nodemanager.h"
+#include "bdd.h"
 
 #define INITIAL_CHAIN_SIZE 1024u
 
@@ -76,6 +77,8 @@ void node_manager_free() {
 
 /** Covert a bdd_ptr to a C pointer */
 bdd *bddptr2cptr(bdd_ptr bdd_ref) {
+  if (bdd_ref == BDD_TRUE) { return BDD_TRUE_ADDR; }
+  if (bdd_ref == BDD_FALSE) { return BDD_FALSE_ADDR; }
   return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
 }
 
