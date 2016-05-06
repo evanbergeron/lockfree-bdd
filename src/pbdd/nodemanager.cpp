@@ -55,7 +55,7 @@ void node_manager_init(uint16_t init_num_vars) {
   for (uint16_t i = 0; i < num_vars; i++) {
     bdds[i].varid = i;
     bdds[i].length = INITIAL_CHAIN_SIZE;
-    bdds[i].bdds = (ht_bdd *)malloc(sizeof(ht_bdd) * INITIAL_CHAIN_SIZE);
+    bdds[i].bdds = (ht_bdd *)calloc(sizeof(ht_bdd), INITIAL_CHAIN_SIZE);
     if (bdds[i].bdds == NULL) {
       exit(EXIT_FAILURE);
     }
