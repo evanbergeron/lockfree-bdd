@@ -17,6 +17,10 @@ struct bdd_vars {
   ht_bdd *bdds;
 };
 
+bool operator ==(const bdd_ptr x, const bdd_ptr y) {
+  return BDD_EQ(x, y);
+}
+
 /** Globals */
 static bdd_vars *bdds = NULL;      // The chained arrays
 static uint16_t num_vars = 0u;     // Number of variables (max varid == num_vars-1)
@@ -61,6 +65,12 @@ void node_manager_free() {
 /** Covert a bdd_ptr to a C pointer */
 bdd *bddptr2cptr(bdd_ptr bdd_ref) {
   return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
+}
+
+bdd_ptr cptr2bddptr(bdd *b) {
+  bdd_ptr result;
+  result.varid = b->varid;
+  // TODO how to cleanly get idx?
 }
 
 bdd_ptr unpack_bddptr(bdd_ptr_packed b) {
