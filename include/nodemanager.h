@@ -1,8 +1,20 @@
+/**
+ * Unique-node manager with lock-free O(1) lookup_or_insert operator.
+ * 
+ * bdd_ptr structs refer to a unique BDD node. They are a replacement
+ * for regular C pointers, and should be passed around by value.
+ *
+ * bdd structs refer to BDD nodes themselves. Unique instances of bdd
+ * structs represent unique BDDs. They should only be passed around
+ * by reference.
+ */
+
 #ifndef NODEMANAGER_H
 #define NODEMANAGER_H
 
 #include <stdint.h>
 
+/** A reference to a specific BDD node */
 struct bdd_ptr {
   uint16_t varid;
   uint32_t idx;
@@ -13,6 +25,10 @@ struct bdd_ptr_packed {
   uint32_t idx;
 } __attribute__((packed));
 
+/**
+ * A BDD node. Unique allocations of this struct represent
+ * distinct BDD nodes.
+ */
 struct bdd {
   bdd_ptr_packed lo;    // 6 bytes
   bdd_ptr_packed hi;    // 6 bytes
@@ -25,6 +41,8 @@ struct bdd {
 
 /** Initialize the node manager with num_vars levels */
 void node_manager_init(unsigned num_vars);
+
+/** Free the node manager and all of its associated nodes */
 void node_manager_free();
 
 /** Allocate and return a pointer to a new node */
@@ -35,6 +53,5 @@ bdd *bddptr2cptr(bdd_ptr bdd_ref);
 
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi);
-
 
 #endif /* NODEMANAGER_H */

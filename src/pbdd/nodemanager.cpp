@@ -20,7 +20,7 @@ struct bdd_vars {
 /** Globals */
 static bdd_vars *bdds = NULL;      // The chained arrays
 static uint16_t num_vars = 0u;     // Number of variables (max varid == num_vars-1)
-
+bool keys_equal(bdd *f, bdd *g);   // Test if two bdds are the same
 
 /** Helpers */
 bdd *resize(bdd *bdd_array, size_t new_size);
@@ -58,16 +58,11 @@ void node_manager_free() {
 }
 
 
-/** Allocate and return a pointer to a new node */
-bdd_ptr new_node(unsigned varid) {
-
-}
-
-
 /** Covert a bdd_ptr to a C pointer */
 bdd *bddptr2cptr(bdd_ptr bdd_ref) {
   return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
 }
+
 
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
@@ -80,24 +75,31 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
   to_find.bdd_node.hi.idx = hi.idx;
   to_find.bdd_node.refcount = 1u;
 
-  // Search through the array
   ht_bdd *bdd_array = bdds[varid].bdds;
   uint32_t length = bdds[varid].length;
+
+  // Search through the array
   for (uint32_t i = hash(&to_find); ; i++) {
     i %= length;
+
+    // Create a dummy node
     ht_bdd expected;
     expected.raw = 0;
-    bool success = __atomic_compare_exchange_n(bdd_array+i, &expected, to_find.raw, false, __, __);
+   
+    // CMPXCHG16B the struct
+    bool success = __atomic_compare_exchange_n(&bdd_array[i].raw, &expected.raw, to_find.raw, false, __ATOMIC_CONSUME, __ATOMIC_CONSUME);
+
     if (success) {
       // Write went through
-      // 
-    } else if () {  // keys match
-      // Write didn't go through, current value is in *expected
-
+    } else if (keys_equal(&expected.bdd_node, &to_find.bdd_node)) {
+      // Write didn't go through, someone else already put the current value here
+    } else {
+      // Write didn't go through, the value here is not equal
     }
   }
 }
 
+/** Hash a bdd node */
 uint32_t hash(ht_bdd *node) {
   bdd *bdd_node = (bdd *)node;
   uint32_t prime = 0x3a8f05c5;
@@ -107,6 +109,15 @@ uint32_t hash(ht_bdd *node) {
   result ^= bdd_node->hi.varid * prime;
   result ^= bdd_node->hi.idx * prime;
   return result;
+}
+
+/** Return true iff f and g have values which represent the same bdd */
+inline bool keys_equal(bdd *f, bdd *g) {
+  return f->lo.varid == g->lo.varid &&
+         f->hi.varid == g->hi.varid &&
+         f->lo.idx == g->lo.idx &&
+         f->hi.idx == g->hi.idx &&
+         f->varid == g->varid;
 }
 
 /** Resize a bdd array chain */
