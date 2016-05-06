@@ -48,7 +48,7 @@ uint32_t hash(ht_bdd *node);
 void node_manager_init(uint16_t init_num_vars) {
   num_vars = init_num_vars;
 
-  bdds = (bdd_vars *)malloc(sizeof(bdd_vars *) * num_vars);
+  bdds = (bdd_vars *)malloc(sizeof(bdd_vars) * num_vars);
   if (bdds == NULL) {
     exit(EXIT_FAILURE);
   }
