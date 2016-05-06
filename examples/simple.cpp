@@ -1,13 +1,15 @@
 #include "bdd.h"
+#include "visualize.h"
 
 int main() {
   bdd_init(100, 100, 3);
 
-  bdd_node *a = ithvar(0);
-  bdd_node *b = ithvar(1);
-  bdd_node *c = ithvar(2);
+  bdd_ptr a = ithvar(0);
+  bdd_ptr b = ithvar(1);
+  /* bdd_ptr c = ithvar(2); */
 
-  bdd_node *result = bdd_or(a, bdd_and(b, c));
+  bdd_ptr result = bdd_or(a, b);
+  /* bdd_ptr result = bdd_or(a, bdd_and(b, c)); */
   /* bdd_node *result = bdd_or(a,b); */
 
   bdd_graphviz(result);

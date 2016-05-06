@@ -21,6 +21,9 @@ void bdd_graphviz(bdd_ptr root) {
  * Recursively print out what a BDD looks like
  */
 void node_graphviz(bdd_ptr node) {
+  if (node == BDD_TRUE || node == BDD_FALSE) {
+    return;
+  }
   std::cout << " \"" << node_to_str(node) << "\""
             <<  " -> "
             << "\"" << node_to_str(get_lo(node)) << "\""
@@ -43,7 +46,7 @@ void node_graphviz(bdd_ptr node) {
 std::string node_to_str(bdd_ptr n) {
   if (n == BDD_TRUE) { return "TRUE"; }
   if (n == BDD_FALSE) { return "FALSE"; }
-  return std::to_string((uint32_t)n.varid);
+  return std::to_string((uint32_t)n.varid) + "_" + std::to_string(n.idx);
 }
 
 void __allsat_helper(bdd_ptr fn, std::vector<std::map<int, bool>> &results,
