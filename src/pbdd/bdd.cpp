@@ -1,5 +1,7 @@
 #include <cassert>
+#include <cstdint>
 #include "bdd.h"
+#include "nodemanager.h"
 #include "op_queue.h"
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
@@ -78,6 +80,22 @@ bdd_ptr bdd_apply(bool_op op, bdd_ptr a, bdd_ptr b){
   return bdd_op(op, a, b);
 }
 
+bdd_ptr bdd_or(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_OR, a, b);
+}
+
+bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_AND, a, b);
+}
+
 bdd_ptr ithvar(int i) {
   return lookup_or_insert(i, BDD_FALSE, BDD_TRUE);
+}
+
+void bdd_init(int maxnodes, int cachesize, int num_vars) {
+  BDD_TRUE.varid = UINT16_MAX;
+  BDD_TRUE.idx = UINT32_MAX;
+  BDD_FALSE.varid = UINT16_MAX - 1;
+  BDD_FALSE.idx = UINT32_MAX;
+  node_manager_init(num_vars);
 }

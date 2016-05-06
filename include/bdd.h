@@ -35,7 +35,7 @@ struct op_node {
  * nodenum - max number of nodes to use in the package
  * cachesize - max number of elements to cache
  */
-int bdd_init(int nodenum, int cachesize, int max_vars);
+void bdd_init(int nodenum, int cachesize, int max_vars);
 
 bdd_ptr bdd_apply(bool_op op, bdd_ptr a, bdd_ptr b);
 
