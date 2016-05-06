@@ -6,7 +6,7 @@ TARGET := bin/bdd
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS := -O2 -g -Wall -Wextra -Wpointer-arith -Wconversion -std=c++11 -march=native 
+CFLAGS := -O2 -g -Wall -Wextra -Wpointer-arith -Wconversion -std=c++11 -march=native
 LIB := -L lib
 INC := -I include
 PBDD := build/pbdd/*.o
@@ -32,5 +32,9 @@ simple:
 tester:
 	make
 	$(CC) $(CFLAGS) test/test_all.cpp $(PBDD) $(INC) $(LIB) -o bin/test_all
+
+nodemanager_tests:
+	make
+	$(CC) $(CFLAGS) test/nodemanager_tests.cpp $(PBDD) $(INC) $(LIB) -o bin/nodemanager_tests
 
 .PHONY: clean

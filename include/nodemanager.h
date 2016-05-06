@@ -1,6 +1,6 @@
 /**
  * Unique-node manager with lock-free O(1) lookup_or_insert operator.
- * 
+ *
  * bdd_ptr structs refer to a unique BDD node. They are a replacement
  * for regular C pointers, and should be passed around by value.
  *
@@ -18,7 +18,7 @@
 struct bdd_ptr {
   uint16_t varid;
   uint32_t idx;
-}; 
+};
 
 struct bdd_ptr_packed {
   uint16_t varid;
@@ -40,7 +40,7 @@ struct bdd {
 #define BDD_EQ(f,g) (f.varid == g.varid && f.idx == g.idx)
 
 /** Initialize the node manager with num_vars levels */
-void node_manager_init(unsigned num_vars);
+void node_manager_init(uint16_t num_vars);
 
 /** Free the node manager and all of its associated nodes */
 void node_manager_free();

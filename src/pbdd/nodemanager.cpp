@@ -63,6 +63,13 @@ bdd *bddptr2cptr(bdd_ptr bdd_ref) {
   return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
 }
 
+bdd_ptr unpack_bddptr(bdd_ptr_packed b) {
+  bdd_ptr result;
+  result.varid = b.varid;
+  result.idx = b.idx;
+  return result;
+}
+
 
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
@@ -85,14 +92,26 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
     // Create a dummy node
     ht_bdd expected;
     expected.raw = 0;
-   
+
     // CMPXCHG16B the struct
-    bool success = __atomic_compare_exchange_n(&bdd_array[i].raw, &expected.raw, to_find.raw, false, __ATOMIC_CONSUME, __ATOMIC_CONSUME);
+    bool success = __atomic_compare_exchange_n(&bdd_array[i].raw,
+        &expected.raw, to_find.raw, false, __ATOMIC_CONSUME, __ATOMIC_CONSUME);
 
     if (success) {
       // Write went through
+      bdd_ptr result;
+      result.varid = varid;
+      result.idx = i;
+      return result;
     } else if (keys_equal(&expected.bdd_node, &to_find.bdd_node)) {
       // Write didn't go through, someone else already put the current value here
+      // Increment ref count and return
+      // TODO
+      /* __atomic_fetch_add(&bdd_array[i].bdd_node.refcount, 1, __ATOMIC_CONSUME); */
+      bdd_ptr result;
+      result.varid = varid;
+      result.idx = i;
+      return result;
     } else {
       // Write didn't go through, the value here is not equal
     }
