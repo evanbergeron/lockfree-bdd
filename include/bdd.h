@@ -6,6 +6,7 @@
 #ifndef BDD_H
 #define BDD_H
 
+#include "nodemanager.h"
 #include <map>
 #include <stdint.h>
 #include <vector>
@@ -36,12 +37,12 @@ struct op_node {
  */
 int bdd_init(int nodenum, int cachesize, int max_vars);
 
-bdd_node *bdd_apply(bdd_node *a, bdd_node *b, bool_op op);
+bdd_ptr bdd_apply(bool_op op, bdd_ptr a, bdd_ptr b);
 
-bdd_node *bdd_and(bdd_node *a, bdd_node *b);
-bdd_node *bdd_or (bdd_node *a, bdd_node *b);
-bdd_node *bdd_not(bdd_node *a);
-bdd_node* ithvar(int i);
+bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b);
+bdd_ptr bdd_or (bdd_ptr a, bdd_ptr b);
+bdd_ptr bdd_not(bdd_ptr a);
+bdd_ptr ithvar(int i);
 void bdd_graphviz(bdd_node *root);
 
 std::vector<std::map<int, bool>> *allsat(bdd_node *fn);
