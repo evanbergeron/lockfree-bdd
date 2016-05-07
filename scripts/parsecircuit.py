@@ -2,6 +2,8 @@
 
 import sys
 
+TYPE = "bdd_ptr "
+
 def writeln(f, s):
   f.write(s)
   f.write('\n')
@@ -11,7 +13,7 @@ def writeheader(f, circuit):
   writeln(f, "#include \"bdd.h\"")
   writeln(f, "#include <iostream>")
   writeln(f, "int main() {")
-  writeln(f, "bdd_init({num},{num});".format(num=circuit.count("INPUT")**3))
+  writeln(f, "bdd_init({num},{num},{num});".format(num=''.join(circuit).count("INPUT")**3))
 
 def writefooter(f):
   writeln(f, "return 0;")
@@ -60,13 +62,13 @@ def emit(cir, f=sys.stdout):
   writefooter(f)
 
 def emitbuff(var, op, f):
-  writeln(f, '{type}{var} = {op};'.format(type='bdd_node *', var='v'+var, op='v'+op))
+  writeln(f, '{type}{var} = {op};'.format(type=TYPE, var='v'+var, op='v'+op))
 
 def emitithvar(name, i, f):
-  writeln(f, '{type}{var} = ithvar({i});'.format(type='bdd_node *', var='v'+name, i=i))
+  writeln(f, '{type}{var} = ithvar({i});'.format(type=TYPE, var='v'+name, i=i))
 
 def emitcall(var, gate, ops, f):
-  writeln(f, '{type}{var} = {fn}({ops});'.format(type='bdd_node *',
+  writeln(f, '{type}{var} = {fn}({ops});'.format(type=TYPE,
                 var='v'+var,
                 fn='bdd_'+gate.lower(),
                 ops=','.join(['v'+o.strip() for o in ops])))
