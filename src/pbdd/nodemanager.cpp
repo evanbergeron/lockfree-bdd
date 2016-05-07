@@ -18,14 +18,6 @@ struct bdd_vars {
   ht_bdd *bdds;
 };
 
-bool operator ==(const bdd_ptr x, const bdd_ptr y) {
-  return BDD_EQ(x, y);
-}
-
-bool operator !=(const bdd_ptr x, const bdd_ptr y) {
-  return !BDD_EQ(x, y);
-}
-
 bdd_ptr get_hi(bdd_ptr f) {
   return unpack_bddptr(bddptr2cptr(f)->hi);
 }
