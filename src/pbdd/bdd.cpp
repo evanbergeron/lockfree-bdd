@@ -147,7 +147,7 @@ void bdd_init(int maxnodes, int cachesize, int num_vars) {
   BDD_TRUE_ADDR->varid = BDD_TRUE.varid;
   BDD_TRUE_ADDR->refcount = UINT16_MAX;
 
-  uint32_t chain_size = 1 << 16;
+  uint32_t chain_size = 1 << 18;
   node_manager_init(num_vars, chain_size);
   memo_table_init(cachesize);
 }
