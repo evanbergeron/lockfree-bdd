@@ -26,29 +26,19 @@ static struct MemoTable {
   uint64_t hits;
 } mt;
 
-uint32_t hash(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
-  bdd *f = bddptr2cptr(F);
-  bdd *g = bddptr2cptr(G);
-  bdd *h = bddptr2cptr(H);
+uint32_t hash(bdd_ptr &F, bdd_ptr &G, bdd_ptr &H) {
+
   uint32_t prime = 0x3a8f05c5;
 
-  uint32_t result = f->varid * prime;
-  result ^= f->lo.varid * prime;
-  result ^= f->lo.idx * prime;
-  result ^= f->hi.varid * prime;
-  result ^= f->hi.idx * prime;
+  uint32_t varids = F.varid;
+  varids << 16u;
+  varids |= G.varid;
 
-  result ^= g->varid * prime;
-  result ^= g->lo.varid * prime;
-  result ^= g->lo.idx * prime;
-  result ^= g->hi.varid * prime;
-  result ^= g->hi.idx * prime;
-
-  result ^= h->varid * prime;
-  result ^= h->lo.varid * prime;
-  result ^= h->lo.idx * prime;
-  result ^= h->hi.varid * prime;
-  result ^= h->hi.idx * prime;
+  uint32_t result = varids;
+  result ^= H.varid * prime;
+  result ^= F.idx * prime;
+  result ^= H.idx * prime;
+  result ^= G.idx * prime;
 
   return result;
 }
