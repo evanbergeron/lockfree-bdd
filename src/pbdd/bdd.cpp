@@ -158,3 +158,11 @@ void bdd_init(uint32_t chainsize, uint32_t cachesize, uint16_t num_vars) {
   node_manager_init(num_vars, chainsize);
   memo_table_init(cachesize);
 }
+
+/* ========== Analysis Functions ========= */
+
+int countsat(bdd_ptr b) {
+  if (b == BDD_TRUE) { return 1; }
+  if (b == BDD_FALSE) { return 0; }
+  return countsat(get_lo(b)) + countsat(get_hi(b));
+}

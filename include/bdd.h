@@ -55,4 +55,7 @@ bdd_ptr bdd_nand (bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_nor (bdd_ptr a, bdd_ptr b);
 bdd_ptr ithvar(int i);
 
+/* =========== Analysis Functions ========== */
+int countsat(bdd_ptr b);
+
 #endif /* BDD_H */
