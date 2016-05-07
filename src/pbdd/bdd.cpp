@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include "memo_table.h"
 #include "bdd.h"
 #include "nodemanager.h"
 #include "op_queue.h"
@@ -27,6 +28,7 @@ bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (g == BDD_TRUE && h == BDD_FALSE) { return f; }
 
   // TODO check cache for prev result
+  if (contains_key(f, g, h)) { return get_result(f, g, h); }
 
   int min_varid = MIN3(f.varid, g.varid, h.varid);
   bdd_ptr fv = (f.varid == min_varid) ? get_lo(f) : f;
@@ -47,6 +49,9 @@ bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 
   // inductively insert ourselves into the unique table
   bdd_ptr result = lookup_or_insert(min_varid, t, e);
+
+  put_result(f, g, h, result);
+
   return result;
 }
 
@@ -121,5 +126,7 @@ void bdd_init(int maxnodes, int cachesize, int num_vars) {
   BDD_TRUE_ADDR->varid = BDD_TRUE.varid;
   BDD_TRUE_ADDR->refcount = UINT16_MAX;
 
-  node_manager_init(num_vars);
+  uint32_t chain_size = 1 << 16;
+  node_manager_init(num_vars, chain_size);
+  memo_table_init(cachesize);
 }

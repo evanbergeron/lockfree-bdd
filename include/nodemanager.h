@@ -43,7 +43,7 @@ bool operator ==(const bdd_ptr x, const bdd_ptr y);
 bool operator !=(const bdd_ptr x, const bdd_ptr y);
 
 /** Initialize the node manager with num_vars levels */
-void node_manager_init(uint16_t num_vars);
+void node_manager_init(uint16_t num_vars, uint32_t chain_size);
 
 /** Free the node manager and all of its associated nodes */
 void node_manager_free();
