@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #include <iostream>
 
@@ -6,6 +7,7 @@
 #include "bdd.h"
 
 #define INITIAL_CHAIN_SIZE 1024u
+#define ATOMICITY __ATOMIC_RELAXED
 
 /** Node manager structures */
 union ht_bdd {
@@ -82,8 +84,11 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
   ht_bdd *bdd_array = bdds[varid].bdds;
   uint32_t length = bdds[varid].length;
 
+  uint32_t iters = 0;
+
   // Search through the array
   for (uint32_t i = hash(&to_find); ; i++) {
+    iters++;
     i %= length;
 
     // Create a dummy node
@@ -91,17 +96,18 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
     expected.raw = 0;
 
     // CMPXCHG16B the struct
-    bool success = __atomic_compare_exchange_n(&bdd_array[i].raw,
-        &expected.raw, to_find.raw, false, __ATOMIC_CONSUME, __ATOMIC_CONSUME);
+//    bool success = __atomic_compare_exchange_n(&bdd_array[i].raw,
+//        &expected.raw, to_find.raw, false, ATOMICITY, ATOMICITY);
 
-    if (success) {
+    if (bdd_array[i].raw == expected.raw) {
       // Write went through
+      bdd_array[i].raw = to_find.raw;
       bdd_ptr result;
       result.varid = varid;
       result.idx = i;
       bdds[varid].numnodes++;
       return result;
-    } else if (keys_equal(&expected.bdd_node, &to_find.bdd_node)) {
+    } else if (keys_equal(&bdd_array[i].bdd_node, &to_find.bdd_node)) {
       // Write didn't go through, someone else already put the current value here
       // Increment ref count and return
       // TODO
@@ -114,6 +120,7 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
       // Write didn't go through, the value here is not equal
     }
   }
+  std::cout << iters << std::endl;
 }
 
 /** Hash a bdd node */
