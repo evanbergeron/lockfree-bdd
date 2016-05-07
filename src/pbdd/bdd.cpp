@@ -86,6 +86,7 @@ bdd_ptr ite_deploy(bool_op op, bdd_ptr a, bdd_ptr b) {
   }
   std::cout << "---" << op << "---" << std::endl;
   node_manager_print_stats();
+  print_mt_stats();
   return result;
 }
 
@@ -130,7 +131,7 @@ bdd_ptr ithvar(int i) {
   return lookup_or_insert(i, BDD_FALSE, BDD_TRUE);
 }
 
-void bdd_init(int maxnodes, int cachesize, int num_vars) {
+void bdd_init(uint32_t chainsize, uint32_t cachesize, uint16_t num_vars) {
   BDD_TRUE.varid = UINT16_MAX;
   BDD_TRUE.idx = UINT32_MAX;
   BDD_FALSE.varid = UINT16_MAX - 1;
@@ -154,7 +155,6 @@ void bdd_init(int maxnodes, int cachesize, int num_vars) {
   BDD_TRUE_ADDR->varid = BDD_TRUE.varid;
   BDD_TRUE_ADDR->refcount = UINT16_MAX;
 
-  uint32_t chain_size = 1 << 18;
-  node_manager_init(num_vars, chain_size);
+  node_manager_init(num_vars, chainsize);
   memo_table_init(cachesize);
 }

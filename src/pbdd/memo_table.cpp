@@ -24,6 +24,7 @@ static struct MemoTable {
   int size;
   uint64_t misses;
   uint64_t hits;
+  uint32_t numnodes;
 } mt;
 
 uint32_t hash(bdd_ptr &F, bdd_ptr &G, bdd_ptr &H) {
@@ -51,6 +52,7 @@ void memo_table_init(int capacity) {
   mt.table = (mt_table_entry *)std::calloc(sizeof(mt_table_entry), capacity);
   mt.misses = 0;
   mt.hits = 0;
+  mt.numnodes = 0;
 }
 
 bool is_empty(const mt_table_entry &entry) {
@@ -92,6 +94,8 @@ void put_result(bdd_ptr F, bdd_ptr G, bdd_ptr H, bdd_ptr result) {
   mt.table[idx].G = G;
   mt.table[idx].H = H;
   mt.table[idx].value = result;
+
+  mt.numnodes++;
 }
 
 /**
@@ -117,4 +121,5 @@ bool contains_key(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
 void print_mt_stats() {
   std::cout << "hits   " << mt.hits << std::endl;
   std::cout << "misses " << mt.misses << std::endl;
+  std::cout << "elets  " << mt.numnodes << std::endl;
 }

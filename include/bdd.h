@@ -43,7 +43,7 @@ extern bdd *BDD_FALSE_ADDR;
  * nodenum - max number of nodes to use in the package
  * cachesize - max number of elements to cache
  */
-void bdd_init(int nodenum, int cachesize, int max_vars);
+void bdd_init(uint32_t nodenum, uint32_t cachesize, uint16_t max_vars);
 
 bdd_ptr bdd_apply(bool_op op, bdd_ptr a, bdd_ptr b);
 
