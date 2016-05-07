@@ -2,115 +2,125 @@
 layout: default
 ---
 
-[Checkpoint](http://evan.sh/lockfree-bdd/checkpoint.html)
 
-This is Evan Bergeron and Kevin Zheng's 15-418 final project site.
+Evan Bergeron, Kevin Zheng
 
 ## Summary
 
-We are going to produce two binary decision diagram library implementations, one with fine-grained locking, and one lockfree. Everything will be written in C++.
+We implemented a parallel binary decision diagram library, focusing on spatial locality and cache coherence. The key data structure is a collection of lockfree hash tables that doubles as a memory allocator, garbage collector, and directed graph.
 
 ## Background
 
-Binary decision diagrams are data structures used to represent boolean functions. We'll give some background on boolean functions and then discuss how to represent them computationally.
+Binary decision diagrams (BDDs) are directed graphs that represent boolean functions. Once constructed, these graphs provide constant time equivalence checking. Unfortunately, constructing these graphs can be costly.
 
-### The Math
+The graphs are built incremently, usually taking a couple at a time and combining them. We focused on parallelizing this combination step.
 
-Recall that a boolean function is a function of the form
+This is tough for a number of reasons.
 
-$$f : \textbf{2}^k \rightarrow \textbf{2}$$
+* *Low arithmetic intensity*: at each step, there's only a couple of pointer redirections.
+* *Lack of spatial locality*: graph traversal can access a wide range of memory addresses and the structure of the input graphs is unpredictable.
+* *Data dependency*: the result of a node is dependent on its children.
 
-where $\textbf{2} = \\{ 0, 1 \\}$. These can be represented as rooted binary trees. Take some ordering on the input variables. Set $x_0$ to be the root of the tree. Then the left child of the root corresponds with the assignment $x_0 = 0$ and the right child means $x_0 = 1$. Continue this inductively down to the leaves.
+The low arithmetic intensity is somewhat inherent to the problem.
 
-The leaves then represent a complete assignment of the input variables. Call this assignment $\textbf{v}$. Set each leaf to be $f(\textbf{v})$.
+## Approach
 
-Some of the subtrees of this complete binary tree may be identical (isomorphic). Starting at the root and moving inductively downward, join subtrees that are isomorphic. If both subtrees of a node are isomorphic, remove this node (in a sense, this variables does not matter).
+### First approach - DFS
 
-The result of this process is called a *reduced ordered binary decision diagram*, or ROBDD. When people say BDD, they usually mean ROBDD.
+Our original serial implementation DFS'd on the graph using the if-then-else normal form operation as described in [2]. We parallelized this using Cilk+ in a fashion similar to [9, 10]. Pseudocode is presented below:
 
-ROBDDs have a number of useful properties, not the least of which is *canonicity*. Which is to say, given a boolean function $f$ and an ordering on the variables $\leq$, there exists a unique ROBDD representing $f$ with the $\leq$ ordering.
+{% highlight c++ %}
+// DFS approach
+bdd combine(bdd f, bdd g, bdd h) {
+  (fv, gv, hv) = left child;
+  (fvn, gvn, hvn) = left child;
+  result->left = spawn_task combine(fv, gv, hv);
+  result->right = combine(fvn, gvn, hvn);
+  sync;
+  return result;
+}
+{% endhighlight %}
 
-Critically, this means that boolean function equivalence can be determined by structural equivalence.
+A constant size worker pool is maintained (in our case, using Cilk+). There is data parallelism in the left and right children of each node, so compute each subgraph in parallel.
 
-### The Data Structure
+In this implementation, a memoization cache is shared between workers to avoid duplicate work.
 
-How are BDDs often implemented? Naturally, there are number of ways. Building an ordered, non-reduced BDD is easy. Supporting the merging operations quickly is the main task. Specifically, there are two main tasks
+This implementation provides a nice solution to the data dependency issue; simply compute from the leaves up. This makes certain canonicity checks very straightforward and yields elegent, readable code. Unfortunately, does very little to address the spatial locality issue.
 
-* Merge isomorphic subgraphs
-* Eliminate nodes whose children are ismorphic.
+### Improving Spatial Locality
 
-Typically, when building a ROBDD, we reduce as we go, rather than build the exponentially large data structure and then reduce. A hash table supports these operations well.
+Our original graph implementation was used a simple recursive formulation:
 
-A typical implementation will maintain a "unique-table" - prior to adding a node $f = (g, v, h)$, we check if the node we're adding is already in the table. If so, proceed, otherwise add. This table can then be built recursively from the leaves up.
+{% highlight c++ %}
+struct bdd_node {
+  int varid;
+  bdd_node *left;
+  bdd_node *right;
+};
+{% endhighlight %}
 
-In general, of course, the BDDs are exponential in size, even if reduced. This provides an avenue for parallelism. Building the unique table in parallel may provide a good deal of speedup.
+with each of these nodes being malloc'd individually. To improve spatial locality, we implemented node managers, as described in TODO.
 
-For this reason, building a performant parallel hash table is in order. This is the central challenge of the project.
+Our implementation has two key data structures:
 
-## The Challenge
+* **The unique table**: a collection of lockfree hash tables that double as a directed graphs and memory allocators
 
-We intend to build a performant, parallel hash table as the backbone of this project. We intend to offer a handful of solutions and compare performance across implementations.
+* **The memo table**: an additional auxiliary memoization table
 
-The main goal is a separate-chained lock-free hash table. Evidence suggests that hash tables are a data structure that benefit greatly from non-blocking implementations. We'll also investigate fine-grained locking with separate-chaining, along with various probing strategies.
+### The Unique Table
 
-Further, paralleling BDD construction seems nontrivial, so even once we finish implementing a lockfree hash table, there will be cleverness required in its usage.
+Our unique table is an array of hash tables. We have a num_var parameter; for each variable id, there is a separate hash table. This helps ensure spatial locality.
 
-## Resources
-We intend on starting from scratch, though with some papers and code as reference. In particular, we expect the Harris paper "A Pragmatic Implementation of Non-Blocking Linked Lists" to be invaluable, as it has been for other students in the past. There are also a number of open-source BDD libraries out there, which will serve as reference points for sequential implementations.
+The hash tables use open-addressing with linear probing. A compare_and_swap is used while probing across. These hash tables are filled with the following struct:
 
-Almost all development will be done locally, though we may look into using different machines for varying memory consistency models.
+{% highlight c++ %}
+struct bdd {
+  bdd_ptr_packed lo;  // 6 bytes
+  bdd_ptr_packed hi;  // 6 bytes
+  uint16_t varid;     // 2 bytes
+  uint16_t refcount;  // 2 bytes
+}
+{% endhighlight %}
 
-Further, we may look into performance testing on the Xeon Phis.
+This struct represents a node in our BDDs. The lo and hi pointers represent edges to other nodes. The varid identifies which boolean variable this node is associated with. The refcount aids in garbage collection.
 
-## Goals and Deliverables
+Since the pointers to lo and hi lead to another location in this data structure, we've effectively embedded the directed graphs directly into the hash tables.
 
-### Plan to Achieve
-* Fine-grained locking implementations of linked list, separately-chained hash table, and BDD library
-* Lock-free implementations of linked list, separately-chained hash table, and BDD library
-* Benchmarks investigating performance across both implementations
-* A handful of canonical BDD examples, specifically nqueens
+Note that the bdd_ptr_packed structs are inlined. This is done with the intent of reducing memory accesses. Our bdd_apply function needs to know the id of the two children nodes. These structs contain the varids, so we avoid an additional dereference of a value that's likely to be a cache miss.
 
-Our understanding of the project expectations is that successful completion of the above will constitute an A on the project. Further areas of exploration include:
+These hash tables support essentially one operation: lookup_or_insert. This is a combined find and put, essentially. We hash the key and linearly probe across using compare and swap. If we find the key we're looking for, we atomically increment the refcount. If we find an empty space, we insert here.
 
-### Hope to Achieve
-* Increasingly clever hash tables, perhaps using binary trees instead of linked lists in each bucket.
-* Investigate correctness on other memory consistency models.
-* Investigate porting the library to other languages, particular python or OCaml.
-* Investigate alternative hash table implementations and various hash table optimizations
-* Investigate running on the Xeon Phi
+## Results
 
-We haven't yet decided if we'd like to use Michael Sullivan's RMC project yet. This is one of the main tasks to be decided in the coming week. It's unclear whether this would make the project easier or harder.
+This section is in progress. We have a working implementation and are currently benchmarking.
 
-## Platform Choice
-We'll be using C++, as we intend to build a C++ BDD library. Our target audience is a CPU C++ software programmer, so this is a natural platform choice.
+## References
 
-## Schedule
-We have 5 weeks for the project. Broadly speaking, we have 6 main tasks. Fine-grained and lock-free versions of a linked list, a hash table, and the full BDD library.
+[1] Randal E. Bryant. Graph-Based Algorithms for Boolean Function Manipulation.
 
-Each list contains the list of tasks we expect to complete by the end of each week.
+[2] Karl S. Brace, Richard L. Rudell, Randal E. Bryant. Efficient Implementation of a BDD Package.
 
-### Week 1
-* Linked list with fine-grained locks
-* Hash table with fine-grained locks
-* Nontrivial progress on BDD library implementation (perhaps initially using builtin data structures)
-* Determine if we'll use the RMC project
-* Have thorough understanding of BDD implementation
+[3] Jagesh V. Sanghavi, Rajeev K. Ranjan, Robert K. Brayton, Alberto Sangiovanni-Vincentelli. High Performance BDD Package By Exploiting Memory Hierarchy.
 
-### Week 2
-* Complete BDD library with fine-grained locks
-* Substantial progress on lock-free linked list implementation
+[4] Bwolen Yang, Yirng-An Chen, Randal E. Bryant, David R. O'Hallaron. Space-and-Time-Efficient BDD Construction via Working Set Control.
 
-### Week 3
-* Substantial progress on lock-free hash table
-* Complete lock-free linked list implementation
+[5] Bwolen Yang and David R. O'Hallaron. Parallel Breath-First BDD Construction.
 
-### Week 4
-* Complete lock-free hash table
-* Complete lock-free BDD library implementation
+[6] Yirng-An Chen, Bwolen Yang, and Randal E. Bryant. Breath-First with Depth-First BDD Construction: A Hybrid Approach.
 
-### Week 5
-* Example code written
-* Performance comparison
-* Writeup complete
+[7] Tony Stornetta and Forrest Brewer. Implementation of an Efficient Parallel BDD Package.
+
+[8] Parnav Ashar and Matthew Cheong. Efficient Breath-First Manipulation of Binary Decision Diagrams.
+
+[9] Tom Van Dijk, Alfons Laarman, and Jaco van de Pol. Multi-Core BDD Operations for Symbolic Reachability.
+
+[10] Yuxiong He. [Multicore-enabling a Binary Decision Diagram algorithm](https://software.intel.com/en-us/articles/multicore-enabling-a-binary-decision-diagram-algorithm).
+
+[11] Jesh Preshing. [The World's Simplest Lockfree Hash Table](http://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/)
+
+* [Checkpoint](http://evan.sh/lockfree-bdd/checkpoint.html)
+* [Proposal](http://evan.sh/lockfree-bdd/proposal.html)
+
+Equal work was performed by both project members.
 
 <a href="https://github.com/evanbergeron/lockfree-bdd" class="github-corner"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
