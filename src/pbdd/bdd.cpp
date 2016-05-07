@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 #include "memo_table.h"
 #include "bdd.h"
 #include "nodemanager.h"
@@ -62,24 +63,30 @@ bdd_ptr ite_deploy(bool_op op, bdd_ptr a, bdd_ptr b) {
   result.idx = 0;
   switch (op) {
     case OP_AND:
-      return ite(a, b, BDD_FALSE);
+      result =  ite(a, b, BDD_FALSE);
       break;
     case OP_OR:
-      return ite(a, BDD_TRUE, b);
+      result =  ite(a, BDD_TRUE, b);
       break;
     case OP_NOT:
-      return ite(a, BDD_FALSE, BDD_TRUE);
+      result =  ite(a, BDD_FALSE, BDD_TRUE);
       break;
     case OP_XOR:
-      return ite(a, bdd_not(b), b);
+      result =  ite(a, bdd_not(b), b);
+      break;
     case OP_NAND:
-      return ite(a, bdd_not(b), BDD_TRUE);
+      result =  ite(a, bdd_not(b), BDD_TRUE);
+      break;
     case OP_NOR:
-      return ite(a, BDD_FALSE, bdd_not(b));
+      result =  ite(a, BDD_FALSE, bdd_not(b));
+      break;
     default:
       assert(false);
       return result;
   }
+  std::cout << "---" << op << "---" << std::endl;
+  node_manager_print_stats();
+  return result;
 }
 
 bdd_ptr bfs_op(bool_op op, bdd_ptr a, bdd_ptr b) {}

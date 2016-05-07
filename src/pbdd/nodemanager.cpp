@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <iostream>
 
 #include "nodemanager.h"
 #include "bdd.h"
@@ -15,6 +16,7 @@ union ht_bdd {
 struct bdd_vars {
   uint16_t varid;
   uint32_t length;
+  uint32_t numnodes;
   ht_bdd *bdds;
 };
 
@@ -36,6 +38,12 @@ bdd *resize(bdd *bdd_array, size_t new_size);
 uint32_t hash(ht_bdd *node);
 
 
+void node_manager_print_stats() {
+  for (uint16_t i = 0; i < num_vars; i++) {
+    std::cout << "varid " << i << ": " << bdds[i].numnodes << std::endl;
+  }
+}
+
 /** Initialize the node manager */
 void node_manager_init(uint16_t init_num_vars, uint32_t chain_size) {
   num_vars = init_num_vars;
@@ -48,6 +56,7 @@ void node_manager_init(uint16_t init_num_vars, uint32_t chain_size) {
   for (uint16_t i = 0; i < num_vars; i++) {
     bdds[i].varid = i;
     bdds[i].length = chain_size;
+    bdds[i].numnodes = 0;
     bdds[i].bdds = (ht_bdd *)calloc(sizeof(ht_bdd), chain_size);
     if (bdds[i].bdds == NULL) {
       exit(EXIT_FAILURE);
@@ -120,6 +129,7 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
       bdd_ptr result;
       result.varid = varid;
       result.idx = i;
+      bdds[varid].numnodes++;
       return result;
     } else if (keys_equal(&expected.bdd_node, &to_find.bdd_node)) {
       // Write didn't go through, someone else already put the current value here

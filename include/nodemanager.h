@@ -66,4 +66,7 @@ bdd_ptr get_hi(bdd_ptr f);
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi);
 
+/** Print out node stats */
+void node_manager_print_stats();
+
 #endif /* NODEMANAGER_H */
