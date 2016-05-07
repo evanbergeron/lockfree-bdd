@@ -37,8 +37,8 @@ extern all_reqs requests;
 /** Convert a bfs request pointer to a C pointer */
 req *reqptr2cptr(req_ptr &ptr);
 
-/** Convert a bfs request pointer to a pointer to the result bdd node */
-bdd_ptr reqptr2resptr(req_ptr &ptr);
+/** Convert a varid and idx to a C pointer */
+req *varididx2cptr(uint16_t varid, uint32_t idx);
 
 /** Initialize the BDD queues */
 void bfs_reqs_init(uint16_t numvars);
