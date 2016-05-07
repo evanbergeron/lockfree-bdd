@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include <cilk/cilk.h>
 #include "memo_table.h"
 #include "bdd.h"
 #include "nodemanager.h"
@@ -40,8 +41,9 @@ bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 
   bdd_ptr t;
   bdd_ptr e;
-  t = ite(fv, gv, hv);
+  t = cilk_spawn ite(fv, gv, hv);
   e = ite(fvn, gvn, hvn);
+  cilk_sync;
 
   if (t == e) {
     return t;

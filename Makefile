@@ -1,4 +1,4 @@
-CC := g++
+CC := /home/evan/cilkplus-install/bin/g++
 SRCDIR := src
 BUILDDIR := build
 TARGET := bin/bdd
@@ -6,9 +6,9 @@ TARGET := bin/bdd
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-WFLAGS := -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef -Wno-unused -Wpointer-arith -Wconversion -Wpointer-arith -Wconversion 
-CFLAGS := -O3 -g -std=c++11 -march=native $(WFLAGS)
-LIB := -L lib -lpthread
+WFLAGS := -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef -Wno-unused -Wpointer-arith -Wconversion -Wpointer-arith -Wconversion
+CFLAGS := -O3 -g -std=c++11 -march=native -fcilkplus $(WFLAGS)
+LIB := -L lib -lpthread -lcilkrts
 INC := -I include
 PBDD := build/pbdd/*.o
 
