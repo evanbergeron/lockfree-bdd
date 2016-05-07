@@ -14,7 +14,7 @@ inline req *reqptr2cptr(req_ptr &ptr) {
 }
 
 /** Convert a varid and idx to a C pointer */
-req *varididx2cptr(uint16_t varid, uint32_t idx) {
+inline req *varididx2cptr(uint16_t varid, uint32_t idx) {
   return &requests.reqs[varid].requests[idx];
 }
 
