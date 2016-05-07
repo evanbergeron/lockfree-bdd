@@ -6,6 +6,8 @@
 
 #define MT_KEY_EQUAL(X,Y) (X.F == Y.F && X.G == Y.G && X.H == Y.H)
 
+#define MAX_SEARCH 8
+
 struct mt_key {
   bdd_ptr F;
   bdd_ptr G;
@@ -68,13 +70,16 @@ bool is_empty(const mt_table_entry &entry) {
 bdd_ptr get_result(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
 
-  while (!is_empty(mt.table[idx])) {
+  int search = 0;
+  while (!is_empty(mt.table[idx]) && search < MAX_SEARCH) {
     if (F == mt.table[idx].F &&
         G == mt.table[idx].G &&
         H == mt.table[idx].H) {
       return mt.table[idx].value;
     }
     idx++;
+    idx %= mt.size;
+    search++;
   }
 
   /* return nullptr; */
@@ -86,8 +91,11 @@ bdd_ptr get_result(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
 void put_result(bdd_ptr F, bdd_ptr G, bdd_ptr H, bdd_ptr result) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
 
-  while (!is_empty(mt.table[idx])) {
+  int search = 0;
+  while (!is_empty(mt.table[idx]) && search < MAX_SEARCH) {
     idx++;
+    idx %= mt.size;
+    search++;
   }
 
   mt.table[idx].F = F;
@@ -104,7 +112,8 @@ void put_result(bdd_ptr F, bdd_ptr G, bdd_ptr H, bdd_ptr result) {
 bool contains_key(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
 
-  while (!is_empty(mt.table[idx])) {
+  int search = 0;
+  while (!is_empty(mt.table[idx]) && search < MAX_SEARCH) {
     if (mt.table[idx].F == F &&
         mt.table[idx].G == G &&
         mt.table[idx].H == H) {
@@ -112,6 +121,8 @@ bool contains_key(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
       return true;
     }
     idx++;
+    idx %= mt.size;
+    search++;
   }
   mt.misses++;
 
