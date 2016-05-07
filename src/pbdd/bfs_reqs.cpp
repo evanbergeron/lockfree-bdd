@@ -36,17 +36,21 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
     }
   }
 
+  uint32_t idx = __atomic_fetch_add(&reqs->numnodes, 1, __ATOMIC_CONSUME);
+  uint32_t cap = __atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME);
+
   // Not in array, insert at tail
   // First, check if we need to resize
-  if (reqs->capacity == reqs->numnodes) {
-    reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*reqs->capacity*RESIZE_FACTOR); 
-    reqs->capacity *= RESIZE_FACTOR;
+  if (cap == idx) {
+    // This is the resizing thread
+    reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
+    __atomic_store_n(&reqs->capacity, cap*2, __ATOMIC_CONSUME);
+  } else if (cap < idx) {
+    // These threads will wait until the array is resized
+    while (__atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME) < idx);
   }
 
   // Then, insert at tail
-  uint32_t idx = reqs->numnodes;
-  reqs->numnodes++;
-
   reqs->requests[idx].f = pack_bddptr(f);
   reqs->requests[idx].g = pack_bddptr(g);
   reqs->requests[idx].h = pack_bddptr(h);
