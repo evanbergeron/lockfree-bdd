@@ -18,14 +18,6 @@ struct bdd_vars {
   ht_bdd *bdds;
 };
 
-bool operator ==(const bdd_ptr x, const bdd_ptr y) {
-  return BDD_EQ(x, y);
-}
-
-bool operator !=(const bdd_ptr x, const bdd_ptr y) {
-  return !BDD_EQ(x, y);
-}
-
 bdd_ptr get_hi(bdd_ptr f) {
   return unpack_bddptr(bddptr2cptr(f)->hi);
 }
@@ -45,7 +37,7 @@ uint32_t hash(ht_bdd *node);
 
 
 /** Initialize the node manager */
-void node_manager_init(uint16_t init_num_vars) {
+void node_manager_init(uint16_t init_num_vars, uint32_t chain_size) {
   num_vars = init_num_vars;
 
   bdds = (bdd_vars *)malloc(sizeof(bdd_vars) * num_vars);
@@ -55,8 +47,8 @@ void node_manager_init(uint16_t init_num_vars) {
 
   for (uint16_t i = 0; i < num_vars; i++) {
     bdds[i].varid = i;
-    bdds[i].length = INITIAL_CHAIN_SIZE;
-    bdds[i].bdds = (ht_bdd *)calloc(sizeof(ht_bdd), INITIAL_CHAIN_SIZE);
+    bdds[i].length = chain_size;
+    bdds[i].bdds = (ht_bdd *)calloc(sizeof(ht_bdd), chain_size);
     if (bdds[i].bdds == NULL) {
       exit(EXIT_FAILURE);
     }

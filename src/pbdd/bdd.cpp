@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include "memo_table.h"
 #include "bdd.h"
 #include "nodemanager.h"
 #include "op_queue.h"
@@ -27,6 +28,7 @@ bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (g == BDD_TRUE && h == BDD_FALSE) { return f; }
 
   // TODO check cache for prev result
+  if (contains_key(f, g, h)) { return get_result(f, g, h); }
 
   int min_varid = MIN3(f.varid, g.varid, h.varid);
   bdd_ptr fv = (f.varid == min_varid) ? get_lo(f) : f;
@@ -47,6 +49,9 @@ bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 
   // inductively insert ourselves into the unique table
   bdd_ptr result = lookup_or_insert(min_varid, t, e);
+
+  put_result(f, g, h, result);
+
   return result;
 }
 
@@ -62,6 +67,15 @@ bdd_ptr ite_deploy(bool_op op, bdd_ptr a, bdd_ptr b) {
     case OP_OR:
       return ite(a, BDD_TRUE, b);
       break;
+    case OP_NOT:
+      return ite(a, BDD_FALSE, BDD_TRUE);
+      break;
+    case OP_XOR:
+      return ite(a, bdd_not(b), b);
+    case OP_NAND:
+      return ite(a, bdd_not(b), BDD_TRUE);
+    case OP_NOR:
+      return ite(a, BDD_FALSE, bdd_not(b));
     default:
       assert(false);
       return result;
@@ -93,6 +107,18 @@ bdd_ptr bdd_not(bdd_ptr a) {
   return ite(a, BDD_FALSE, BDD_TRUE);
 }
 
+bdd_ptr bdd_xor(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_XOR, a, b);
+}
+
+bdd_ptr bdd_nand(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_NAND, a, b);
+}
+
+bdd_ptr bdd_nor(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_NOR, a, b);
+}
+
 bdd_ptr ithvar(int i) {
   return lookup_or_insert(i, BDD_FALSE, BDD_TRUE);
 }
@@ -121,5 +147,7 @@ void bdd_init(int maxnodes, int cachesize, int num_vars) {
   BDD_TRUE_ADDR->varid = BDD_TRUE.varid;
   BDD_TRUE_ADDR->refcount = UINT16_MAX;
 
-  node_manager_init(num_vars);
+  uint32_t chain_size = 1 << 18;
+  node_manager_init(num_vars, chain_size);
+  memo_table_init(cachesize);
 }

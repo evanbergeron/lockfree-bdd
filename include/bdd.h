@@ -16,6 +16,9 @@ typedef uint32_t bool_op;
 #define OP_AND  0u
 #define OP_OR   1u
 #define OP_NOT  2u
+#define OP_XOR  3u
+#define OP_NAND 4u
+#define OP_NOR  5u
 
 struct bdd_node {
   unsigned is_forwarding:1;
@@ -47,6 +50,9 @@ bdd_ptr bdd_apply(bool_op op, bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_or (bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_not(bdd_ptr a);
+bdd_ptr bdd_xor (bdd_ptr a, bdd_ptr b);
+bdd_ptr bdd_nand (bdd_ptr a, bdd_ptr b);
+bdd_ptr bdd_nor (bdd_ptr a, bdd_ptr b);
 bdd_ptr ithvar(int i);
 
 #endif /* BDD_H */

@@ -2,20 +2,21 @@
 #include <cstdlib>
 #include <cstdint>
 #include "bdd.h"
+#include "nodemanager.h"
 
 #define MT_KEY_EQUAL(X,Y) (X.F == Y.F && X.G == Y.G && X.H == Y.H)
 
 struct mt_key {
-  bdd_node *F; 
-  bdd_node *G; 
-  bdd_node *H; 
+  bdd_ptr F;
+  bdd_ptr G;
+  bdd_ptr H;
 };
 
 struct mt_table_entry {
-  bdd_node *F;
-  bdd_node *G;
-  bdd_node *H;
-  bdd_node *value;
+  bdd_ptr F;
+  bdd_ptr G;
+  bdd_ptr H;
+  bdd_ptr value;
 };
 
 static struct MemoTable {
@@ -25,12 +26,21 @@ static struct MemoTable {
   uint64_t hits;
 } mt;
 
-uint32_t hash(bdd_node *F, bdd_node *G, bdd_node *H) {
-  uint64_t c = 0x27d4eb2du;
-  uint64_t f = (uint64_t)((uintptr_t)F);
-  uint64_t g = (uint64_t)((uintptr_t)G);
-  uint64_t h = (uint64_t)((uintptr_t)H);
-  return (uint32_t) ((((f*c)+g)*c+h)*c);
+uint32_t hash(bdd_ptr &F, bdd_ptr &G, bdd_ptr &H) {
+
+  uint32_t prime = 0x3a8f05c5;
+
+  uint32_t varids = F.varid;
+  varids << 16u;
+  varids |= G.varid;
+
+  uint32_t result = varids;
+  result ^= H.varid * prime;
+  result ^= F.idx * prime;
+  result ^= H.idx * prime;
+  result ^= G.idx * prime;
+
+  return result;
 }
 
 /**
@@ -43,30 +53,41 @@ void memo_table_init(int capacity) {
   mt.hits = 0;
 }
 
+bool is_empty(const mt_table_entry &entry) {
+  return entry.F.varid == 0 && entry.F.idx == 0 &&
+         entry.G.varid == 0 && entry.G.idx == 0 &&
+         entry.H.varid == 0 && entry.H.idx == 0;
+}
+
 /**
  * Search the table for pre-computed results (F,G,H).
  * Returns a pointer to the bdd node if it was in the table, otherwise nullptr.
  */
-bdd_node *get_result(bdd_node *F, bdd_node *G, bdd_node *H) {
+bdd_ptr get_result(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
 
-  if (F == mt.table[idx].F &&
-      G == mt.table[idx].G &&
-      H == mt.table[idx].H) {
-    mt.hits++;
-    return mt.table[idx].value;
+  while (!is_empty(mt.table[idx])) {
+    if (F == mt.table[idx].F &&
+        G == mt.table[idx].G &&
+        H == mt.table[idx].H) {
+      return mt.table[idx].value;
+    }
+    idx++;
   }
-  mt.misses++;
 
-  return nullptr;
+  /* return nullptr; */
 }
 
 /**
  * Place a computed result in the memoization table (F,G,H) -> result.
  */
-void put_result(bdd_node *F, bdd_node *G, bdd_node *H, bdd_node *result) {
+void put_result(bdd_ptr F, bdd_ptr G, bdd_ptr H, bdd_ptr result) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
-  
+
+  while (!is_empty(mt.table[idx])) {
+    idx++;
+  }
+
   mt.table[idx].F = F;
   mt.table[idx].G = G;
   mt.table[idx].H = H;
@@ -76,11 +97,21 @@ void put_result(bdd_node *F, bdd_node *G, bdd_node *H, bdd_node *result) {
 /**
  * Returns true of the results for (F,G,H) are in the table, else fase.
  */
-bool contains_key(bdd_node *F, bdd_node *G, bdd_node *H) {
+bool contains_key(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
-  return F == mt.table[idx].F &&
-         G == mt.table[idx].G &&
-         H == mt.table[idx].H;
+
+  while (!is_empty(mt.table[idx])) {
+    if (mt.table[idx].F == F &&
+        mt.table[idx].G == G &&
+        mt.table[idx].H == H) {
+      mt.hits++;
+      return true;
+    }
+    idx++;
+  }
+  mt.misses++;
+
+  return false;
 }
 
 void print_mt_stats() {

@@ -18,6 +18,12 @@
 struct bdd_ptr {
   uint16_t varid;
   uint32_t idx;
+  inline bool operator == (const bdd_ptr &other) {
+    return this->varid == other.varid && this->idx == other.idx;
+  }
+  inline bool operator != (const bdd_ptr &other) {
+    return this->varid != other.varid || this->idx != other.idx;
+  }
 };
 
 struct bdd_ptr_packed {
@@ -39,11 +45,8 @@ struct bdd {
 
 #define BDD_EQ(f,g) (f.varid == g.varid && f.idx == g.idx)
 
-bool operator ==(const bdd_ptr x, const bdd_ptr y);
-bool operator !=(const bdd_ptr x, const bdd_ptr y);
-
 /** Initialize the node manager with num_vars levels */
-void node_manager_init(uint16_t num_vars);
+void node_manager_init(uint16_t num_vars, uint32_t chain_size);
 
 /** Free the node manager and all of its associated nodes */
 void node_manager_free();
