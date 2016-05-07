@@ -25,6 +25,9 @@ The low arithmetic intensity is somewhat inherent to the problem.
 
 ## Approach
 
+In all implementations, we maintain a unique table: a key-value store that ensures no duplicate nodes are created.
+
+
 ### First approach - DFS
 
 Our original serial implementation DFS'd on the graph using the if-then-else normal form operation as described in [2]. We parallelized this using Cilk+ in a fashion similar to [9, 10]. Pseudocode is presented below:
@@ -43,13 +46,23 @@ bdd combine(bdd f, bdd g, bdd h) {
 
 A constant size worker pool is maintained (in our case, using Cilk+). There is data parallelism in the left and right children of each node, so compute each subgraph in parallel.
 
-In this implementation, a memoization cache is shared between workers to avoid duplicate work.
+In this implementation, a lossy memoization cache is shared between workers to avoid duplicate work. Additionally, the DAG and unique table are merged as described in [2] to reduce memory footprint.
 
 This implementation provides a nice solution to the data dependency issue; simply compute from the leaves up. This makes certain canonicity checks very straightforward and yields elegent, readable code. Unfortunately, does very little to address the spatial locality issue.
 
-### Improving Spatial Locality
+## Improving Spatial Locality
 
-Our original graph implementation was used a simple recursive formulation:
+And so begins the long journey to spatial locality.
+
+### Open-Addressing
+
+Our initial unique table used separate chaining with linked lists in each bucket. After decided that we wanted to focus on memory locality, we switched a linear-probing, open-addressing scheme.
+
+In a parallel context, this hash table must be able to be read and written to concurrently. Our final implementation is heavily based on [11].
+
+### Node Managers
+
+Our original graph implementation used a simple recursive formulation:
 
 {% highlight c++ %}
 struct bdd_node {
@@ -59,7 +72,41 @@ struct bdd_node {
 };
 {% endhighlight %}
 
-with each of these nodes being malloc'd individually. To improve spatial locality, we implemented node managers, as described in TODO.
+with each of these nodes being malloc'd individually. To improve spatial locality, we implemented **node managers**, as described in [3, 4].
+
+At init time, the node managers pre-allocate large blocks of memory. When the user requests a new node allocation, they must provide a variable id. Node with similar variable ids are grouped together.
+
+The intent was to use the node managers in conjunction with a BFS-style tree traversal. The BFS operation is significantly trickier than DFS, involving two separate phases. At this point, we only had the first phase correctly implemented.
+
+### A new struct definition
+
+At each step of either a BFS or DFS style traversal, the expansion algorithm must request the variable ids of each child node. [3] presents a nontraditional struct definition that inlines the children variable ids to preserve locality of access. We did something similar, inlining packed pointers to the left and right children.
+
+{% highlight c++ %}
+struct bdd_ptr_packed {
+  uint16_t varid;
+  uint32_t idx;
+} __attribute__((packed));
+
+struct bdd {
+  bdd_ptr_packed lo;    // 6 bytes
+  bdd_ptr_packed hi;    // 6 bytes
+  uint16_t varid;       // 2 bytes
+  uint16_t refcount;    // 2 bytes
+};
+{% endhighlight %}
+
+Only 16 bytes in total, matching [3]'s size. Conveniently, this lets us use a 128-bit compare_and_swap.
+
+The packed pointers are used as unique identifiers into our unique table. Since we define our own memory allocation scheme, we can uniquely identify nodes by their variable id and internal position.
+
+### BFS
+
+This was hard. It took us several tries to correctly implement this, though it was our intent for a while. All of the memory locality design decisions made above were made with BFS in mind.
+
+Recall that in the BDD graphs, the value of a node is dependent on its childrens' values. In a DFS context, we compute the value of the children prior to the parent, making reduction straightforward. In BFS, we need two phases: an expansion and a reduction phase.
+
+## Final Implementation
 
 Our implementation has two key data structures:
 
@@ -92,7 +139,17 @@ These hash tables support essentially one operation: lookup_or_insert. This is a
 
 ## Results
 
-This section is in progress. We have a working implementation and are currently benchmarking.
+This section is in progress. We finally have a working implementation and are currently benchmarking.
+
+## Future Work
+
+There a handful of optimizations on sequential BDDs that we didn't get the chance to implement. Complement edges and standard triples as described in [2] would be the first step.
+
+The size of the resulting BDD can be highly dependent on the ordering of variables. For this reason, some BDD libraries provide heuristics for dynamic variable reordering.
+
+Additionally, we'd be interested in implementing a hybrid DFS/BFS traversal in the spirit of [4, 5, 6].
+
+## Lessons Learned
 
 ## References
 
