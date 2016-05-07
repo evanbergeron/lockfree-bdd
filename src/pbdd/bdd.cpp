@@ -67,6 +67,15 @@ bdd_ptr ite_deploy(bool_op op, bdd_ptr a, bdd_ptr b) {
     case OP_OR:
       return ite(a, BDD_TRUE, b);
       break;
+    case OP_NOT:
+      return ite(a, BDD_FALSE, BDD_TRUE);
+      break;
+    case OP_XOR:
+      return ite(a, bdd_not(b), b);
+    case OP_NAND:
+      return ite(a, bdd_not(b), BDD_TRUE);
+    case OP_NOR:
+      return ite(a, BDD_FALSE, bdd_not(b));
     default:
       assert(false);
       return result;
@@ -96,6 +105,18 @@ bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b) {
 
 bdd_ptr bdd_not(bdd_ptr a) {
   return ite(a, BDD_FALSE, BDD_TRUE);
+}
+
+bdd_ptr bdd_xor(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_XOR, a, b);
+}
+
+bdd_ptr bdd_nand(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_NAND, a, b);
+}
+
+bdd_ptr bdd_nor(bdd_ptr a, bdd_ptr b) {
+  return bdd_op(OP_NOR, a, b);
 }
 
 bdd_ptr ithvar(int i) {
