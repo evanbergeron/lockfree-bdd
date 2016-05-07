@@ -40,10 +40,10 @@ bdd_ptr terminal_case(bdd_ptr f,bdd_ptr g, bdd_ptr h) {
 
 void bf_ite_expand(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   int min_varid = MIN3(f.varid, g.varid, h.varid);
-  bdd_ptr r = bfs_reqs_lookup_or_insert(f, g, h);
+  req_ptr r = bfs_reqs_lookup_or_insert(f, g, h);
   for (int varid = 0; varid < requests.numvars; varid++) {
     // TODO data parallelism
-    for (int i = 0; i < requests.reqs[varid].numnodes; i ++) {
+    for (int i = 0; i < requests.reqs[varid].numnodes; i++) {
 
       req *cur_req = varididx2cptr(varid, i);
 
@@ -76,13 +76,74 @@ void bf_ite_expand(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   }
 }
 
-bdd_ptr bf_ite_reduce() {}
+bool is_forwarding(bdd *b) {
+  /*
+   * BDD nodes in the request table don't need refcounting.
+   * We reuse this field for forwarding.
+   *
+   * This is a bit of a hack :P
+   *
+   * */
+  return b->refcount == 1;
+}
+
+req *get_req_lo(req *r) {
+  uint16_t varid_lo = unpack_bddptr(r->result.lo).varid;
+  uint32_t idx_lo = unpack_bddptr(r->result.lo).idx;
+  req *r_lo = varididx2cptr(varid_lo, idx_lo);
+  return r_lo;
+}
+
+bdd_ptr bf_ite_reduce() {
+  for (int varid = requests.numvars - 1; varid >= 0; varid++) {
+    // TODO data parallelism
+    for (int i = 0; i < requests.reqs[varid].numnodes; i ++) {
+
+      // This is the bdd node we're reducing right now
+      bdd *to_reduce = &varididx2cptr(varid, i)->result;
+
+      // Check if to_reduce's lo is forwarding
+      req_ptr rp_lo = (req_ptr)unpack_bddptr(to_reduce->lo);
+      bdd *to_reduce_lo = &reqptr2cptr(rp_lo)->result;
+      if (is_forwarding(to_reduce_lo)) {
+        to_reduce->lo.varid = to_reduce_lo->lo.varid;
+        to_reduce->lo.idx = to_reduce_lo->lo.idx;
+      }
+
+      // Check if to_reduce's hi is forwarding
+      req_ptr rp_hi = (req_ptr)unpack_bddptr(to_reduce->hi);
+      bdd *to_reduce_hi = &reqptr2cptr(rp_hi)->result;
+      if (is_forwarding(to_reduce_hi)) {
+        to_reduce->hi.varid = to_reduce_hi->lo.varid;
+        to_reduce->hi.idx = to_reduce_hi->lo.idx;
+      }
+
+      // Are the lo/hi branches equivalent?
+      if (to_reduce->lo.varid == to_reduce->hi.varid &&
+          to_reduce->lo.idx == to_reduce->hi.idx) {
+        // Forwarding hack
+        to_reduce->refcount = 1;
+        continue;
+      }
+
+      // Forward into the unique table
+      bdd_ptr final_result = lookup_or_insert(to_reduce->varid,
+         unpack_bddptr(to_reduce->lo),
+         unpack_bddptr(to_reduce->hi));
+
+      to_reduce->lo = pack_bddptr(final_result);
+      to_reduce->hi = pack_bddptr(final_result);
+      to_reduce->refcount = 1;
+    }
+  }
+}
 
 bdd_ptr bf_ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (is_terminal(f, g, h)) { return terminal_case(f, g, h); }
   bf_ite_expand(f, g, h);
-  bdd_ptr result = bf_ite_reduce();
-  return result;
+  bdd_ptr result = bf_ite_reduce(); // ensured to be forwarding
+  assert(is_forwarding(bddptr2cptr(result)));
+  return get_lo(result); // TODO possibly wrong
 }
 
 bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
