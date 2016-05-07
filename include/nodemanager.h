@@ -58,6 +58,7 @@ bdd_ptr new_node(unsigned varid);
 bdd *bddptr2cptr(bdd_ptr bdd_ref);
 bdd_ptr cptr2bddptr(bdd *b);
 bdd_ptr unpack_bddptr(bdd_ptr_packed p);
+bdd_ptr_packed pack_bddptr(bdd_ptr p);
 
 bdd_ptr get_lo(bdd_ptr f);
 bdd_ptr get_hi(bdd_ptr f);

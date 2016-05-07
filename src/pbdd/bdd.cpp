@@ -2,6 +2,8 @@
 #include <cstdint>
 #include "memo_table.h"
 #include "bdd.h"
+#include "bfs_reqs.h"
+#include "temp_manager.h"
 #include "nodemanager.h"
 #include "op_queue.h"
 
@@ -20,6 +22,67 @@ bdd_ptr get_hi(bdd *F) {
 
 bdd *get_lo(bdd *F) {
   return bddptr2cptr(unpack_bddptr(F->lo));
+}
+
+bool is_terminal(bdd_ptr f,bdd_ptr g, bdd_ptr h) {
+  if (f == BDD_TRUE) { return true; }
+  else if (f == BDD_FALSE) { return true; }
+  else if (g == BDD_TRUE && h == BDD_FALSE) { return true; }
+  return false;
+}
+
+bdd_ptr terminal_case(bdd_ptr f,bdd_ptr g, bdd_ptr h) {
+  assert(is_terminal(f, g, h));
+  if (f == BDD_TRUE) { return g; }
+  if (f == BDD_FALSE) { return h; }
+  if (g == BDD_TRUE && h == BDD_FALSE) { return f; }
+}
+
+void bf_ite_expand(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
+  int min_varid = MIN3(f.varid, g.varid, h.varid);
+  bdd_ptr r = bfs_reqs_lookup_or_insert(f, g, h);
+  for (int varid = 0; varid < requests.numvars; varid++) {
+    // TODO data parallelism
+    for (int i = 0; i < requests.reqs[varid].numnodes; i ++) {
+
+      req *cur_req = varididx2cptr(varid, i);
+
+      bdd_ptr f = unpack_bddptr(cur_req->f);
+      bdd_ptr g = unpack_bddptr(cur_req->g);
+      bdd_ptr h = unpack_bddptr(cur_req->h);
+
+      int min_varid = MIN3(f.varid, g.varid, h.varid);
+      bdd_ptr fv = (f.varid == min_varid) ? get_lo(f) : f;
+      bdd_ptr gv = (g.varid == min_varid) ? get_lo(g) : g;
+      bdd_ptr hv = (h.varid == min_varid) ? get_lo(h) : h;
+      bdd_ptr fvn = (f.varid == min_varid) ? get_hi(f) : f;
+      bdd_ptr gvn = (g.varid == min_varid) ? get_hi(g) : g;
+      bdd_ptr hvn = (h.varid == min_varid) ? get_hi(h) : h;
+
+      // Handle lo case
+      if (is_terminal(fv, gv, hv)) {
+        cur_req->result.lo = pack_bddptr(terminal_case(fv, gv, hv));
+      } else {
+        cur_req->result.lo = pack_bddptr(bfs_reqs_lookup_or_insert(fv, gv, hv));
+      }
+
+      // Handle hi case
+      if (is_terminal(fvn, gvn, hvn)) {
+        cur_req->result.hi = pack_bddptr(terminal_case(fvn, gvn, hvn));
+      } else {
+        cur_req->result.hi = pack_bddptr(bfs_reqs_lookup_or_insert(fvn, gvn, hvn));
+      }
+    }
+  }
+}
+
+bdd_ptr bf_ite_reduce() {}
+
+bdd_ptr bf_ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
+  if (is_terminal(f, g, h)) { return terminal_case(f, g, h); }
+  bf_ite_expand(f, g, h);
+  bdd_ptr result = bf_ite_reduce();
+  return result;
 }
 
 bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
