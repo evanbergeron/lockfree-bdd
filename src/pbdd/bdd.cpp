@@ -220,20 +220,23 @@ bdd_ptr ite_deploy(bool_op op, bdd_ptr a, bdd_ptr b) {
   result.idx = 0;
   switch (op) {
     case OP_AND:
-      return ITE_OP(a, b, BDD_FALSE);
+      result = ITE_OP(a, b, BDD_FALSE);
       break;
     case OP_OR:
-      return ITE_OP(a, BDD_TRUE, b);
+      result = ITE_OP(a, BDD_TRUE, b);
       break;
     case OP_NOT:
-      return ITE_OP(a, BDD_FALSE, BDD_TRUE);
+      result = ITE_OP(a, BDD_FALSE, BDD_TRUE);
       break;
     case OP_XOR:
-      return ITE_OP(a, bdd_not(b), b);
+      result = ITE_OP(a, bdd_not(b), b);
+      break;
     case OP_NAND:
-      return ITE_OP(a, bdd_not(b), BDD_TRUE);
+      result = ITE_OP(a, bdd_not(b), BDD_TRUE);
+      break;
     case OP_NOR:
-      return ITE_OP(a, BDD_FALSE, bdd_not(b));
+      result = ITE_OP(a, BDD_FALSE, bdd_not(b));
+      break;
     default:
       assert(false);
       return result;
