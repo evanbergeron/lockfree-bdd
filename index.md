@@ -106,6 +106,37 @@ This was hard. It took us several tries to correctly implement this, though it w
 
 Recall that in the BDD graphs, the value of a node is dependent on its childrens' values. In a DFS context, we compute the value of the children prior to the parent, making reduction straightforward. In BFS, we need two phases: an expansion and a reduction phase.
 
+Our final implementation uses the ite formulation of bfs, similar to [8]. Our understanding is that this incurs more memory accesses than the more modern (op, node, node) implementations as in [4, 5, 6]. We ultimately chose this approach because of its consistency with our dfs implementation, which allowed for a good deal of code reuse.
+
+We maintain a mapping from bdd_node triples to a final bdd_result. We maintain a dynamically-resized list for each variable. The elements of the list are 4-tuples: 3 bdd_ptrs (a key) and 1 bdd node (a result).
+
+Pseudocode is presented below.
+
+{% highlight c++ %}
+void bfs_expand(f, g, h) {
+  make new bdd_node r;
+  create_request(f, g, h, r);
+  for each varid
+    for each request of this varid
+      expand lo and hi, add to appropriate queue
+}
+{% endhighlight %}
+
+{% highlight c++ %}
+void bfs_reduce() {
+  for each varid, starting from the bottom
+    for each request of this varid
+      if either child is a forwarding node,
+        grab the node they forward to
+      if lo == hi, make yourself a forwarding node
+        to one of them
+      if your value is already in the unique table,
+        forward to that
+      otherwise, insert into the unique_table
+}
+{% endhighlight %}
+
+
 ## Final Implementation
 
 Our implementation has two key data structures:
