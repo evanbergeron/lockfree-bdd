@@ -13,7 +13,7 @@ We implemented a parallel binary decision diagram library, focusing on spatial l
 
 Binary decision diagrams (BDDs) are directed graphs that represent boolean functions. Once constructed, these graphs provide constant time equivalence checking. Unfortunately, constructing these graphs can be costly.
 
-The graphs are built incremently, usually taking a couple at a time and combining them. We focused on parallelizing this combination step.
+The graphs are built incrementally, usually taking a couple at a time and combining them. We focused on paralleling this combination step.
 
 This is tough for a number of reasons.
 
@@ -30,7 +30,7 @@ In all implementations, we maintain a unique table: a key-value store that ensur
 
 ### First approach - DFS
 
-Our original serial implementation DFS'd on the graph using the if-then-else normal form operation as described in [2]. We parallelized this using Cilk+ in a fashion similar to [9, 10]. Pseudocode is presented below:
+Our original serial implementation DFS'd on the graph using the if-then-else normal form operation as described in [2]. We paralleled this using Cilk+ in a fashion similar to [9, 10]. Pseudocode is presented below:
 
 {% highlight c++ %}
 // DFS approach
@@ -48,7 +48,7 @@ A constant size worker pool is maintained (in our case, using Cilk+). There is d
 
 In this implementation, a lossy memoization cache is shared between workers to avoid duplicate work. Additionally, the DAG and unique table are merged as described in [2] to reduce memory footprint.
 
-This implementation provides a nice solution to the data dependency issue; simply compute from the leaves up. This makes certain canonicity checks very straightforward and yields elegent, readable code. Unfortunately, does very little to address the spatial locality issue.
+This implementation provides a nice solution to the data dependency issue; simply compute from the leaves up. This makes certain canonicity checks very straightforward and yields elegant, readable code. Unfortunately, does very little to address the spatial locality issue.
 
 ## Improving Spatial Locality
 
@@ -172,7 +172,7 @@ These hash tables support essentially one operation: lookup_or_insert. This is a
 
 ## Results
 
-This section is in progress. We finally have a working implementation and are currently benchmarking.
+This section is in progress. We finally have a working implementation and are currently benchmarking. Our test suite includes nqueens of various sizes and a couple of ISCA85 circuits, in particular the C1908 circuit.
 
 ## Future Work
 
