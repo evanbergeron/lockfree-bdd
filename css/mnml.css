@@ -1,0 +1,39 @@
+@import url(//fonts.googleapis.com/css?family=Inconsolata:400,700);
+body {
+    font: 16px/1.5 Inconsolata, monospace;
+    max-width:35rem;
+}
+html {
+    background: #f9fffb;
+    color: #354552;
+    padding: 2rem;
+}
+h2 {
+    padding-left: 7em;
+    text-indent: -7em;
+}
+.banner {
+    background-color: rgb(209, 212, 235);
+    color: white;
+    padding: 1rem;
+    display: inline-block;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+}
+pre, code {
+  /* font: 13px/1.5 Inconsolata, sans-serif; */
+  font-family: inherit;
+  background-color: #eee;
+}
+
+pre {
+  padding: .5rem 1rem;
+  font-size: 0.8rem;
+}
+code {
+  padding: .1rem .25rem;
+}
+pre > code {
+  padding: 0;
+}
