@@ -5,8 +5,19 @@
 #define INITIAL_CHAINSIZE 1024u
 
 
+/** Helpers */
+bool reqs_equal(const bdd_ptr &f,
+                const bdd_ptr &g,
+                const bdd_ptr &h,
+                const req &request);
+
 /** All the requests */
 all_reqs requests;
+
+/** Get a cannonical pointer to a request */
+req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
+
+}
 
 /** Convert a bfs request pointer to a C pointer */
 inline req *reqptr2cptr(req_ptr &ptr) {
@@ -37,5 +48,14 @@ void bfs_reqs_free() {
   free(requests.reqs);
 }
 
-/** Get a cannonical pointer to a request */
-req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h);
+inline bool reqs_equal(const bdd_ptr &f,
+                       const bdd_ptr &g,
+                       const bdd_ptr &h,
+                       const req &request) {
+  return f.varid == request.f.varid &&
+         g.varid == request.g.varid &&
+         h.varid == request.h.varid &&
+         f.idx == request.f.idx &&
+         g.idx == request.g.idx &&
+         h.idx == request.h.idx;
+}
