@@ -13,6 +13,7 @@
 #define NODEMANAGER_H
 
 #include <stdint.h>
+#include "bdd.h"
 
 /** A reference to a specific BDD node */
 struct bdd_ptr {
@@ -42,7 +43,6 @@ struct bdd {
   uint16_t refcount;    // 2 bytes
 };
 
-
 #define BDD_EQ(f,g) (f.varid == g.varid && f.idx == g.idx)
 
 /** Initialize the node manager with num_vars levels */
@@ -54,17 +54,43 @@ void node_manager_free();
 /** Allocate and return a pointer to a new node */
 bdd_ptr new_node(unsigned varid);
 
-/** Convert a bdd_ptr to a C pointer */
-bdd *bddptr2cptr(bdd_ptr bdd_ref);
-bdd *packedbddptr2cptr(bdd_ptr_packed bdd_ref);
-bdd_ptr cptr2bddptr(bdd *b);
-bdd_ptr unpack_bddptr(bdd_ptr_packed p);
-bdd_ptr_packed pack_bddptr(bdd_ptr p);
-
-bdd_ptr get_lo(bdd_ptr f);
-bdd_ptr get_hi(bdd_ptr f);
-
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi);
+
+/** Covert a bdd_ptr to a C pointer */
+bdd *bddptr2cptr(bdd_ptr bdd_ref);
+bdd *packedbddptr2cptr(bdd_ptr_packed bdd_ref);
+
+/** Pack/unpack bdd pointers */
+bdd_ptr unpack_bddptr(bdd_ptr_packed b);
+bdd_ptr_packed pack_bddptr(bdd_ptr b);
+
+/** Get the hi/lo branches of a node */
+bdd_ptr get_hi(bdd_ptr f);
+bdd_ptr get_lo(bdd_ptr f);
+
+
+/** Implementations of the utility functions */
+inline bdd_ptr unpack_bddptr(bdd_ptr_packed b) {
+  bdd_ptr result;
+  result.varid = b.varid;
+  result.idx = b.idx;
+  return result;
+}
+
+inline bdd_ptr_packed pack_bddptr(bdd_ptr b) {
+  bdd_ptr_packed result;
+  result.varid = b.varid;
+  result.idx = b.idx;
+  return result;
+}
+
+inline bdd_ptr get_hi(bdd_ptr f) {
+  return unpack_bddptr(bddptr2cptr(f)->hi);
+}
+
+inline bdd_ptr get_lo(bdd_ptr f) {
+  return unpack_bddptr(bddptr2cptr(f)->lo);
+}
 
 #endif /* NODEMANAGER_H */

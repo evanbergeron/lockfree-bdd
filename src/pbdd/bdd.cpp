@@ -3,7 +3,6 @@
 #include "memo_table.h"
 #include "bdd.h"
 #include "bfs_reqs.h"
-#include "temp_manager.h"
 #include "nodemanager.h"
 #include "op_queue.h"
 

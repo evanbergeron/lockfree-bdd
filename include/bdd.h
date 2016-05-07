@@ -33,6 +33,10 @@ struct op_node {
   bdd_node *g;
 };
 
+
+struct bdd_ptr;
+struct bdd;
+
 extern bdd_ptr BDD_TRUE;
 extern bdd_ptr BDD_FALSE;
 extern bdd *BDD_TRUE_ADDR;

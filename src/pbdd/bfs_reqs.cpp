@@ -9,7 +9,7 @@
 
 
 /** Helpers */
-bool reqs_equal(const bdd_ptr &f,
+static bool reqs_equal(const bdd_ptr &f,
                 const bdd_ptr &g,
                 const bdd_ptr &h,
                 const req &request);
@@ -63,16 +63,6 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   return result;
 }
 
-/** Convert a bfs request pointer to a C pointer */
-inline req *reqptr2cptr(req_ptr &ptr) {
-  return &requests.reqs[ptr.varid].requests[ptr.idx];
-}
-
-/** Convert a varid and idx to a C pointer */
-inline req *varididx2cptr(uint16_t varid, uint32_t idx) {
-  return &requests.reqs[varid].requests[idx];
-}
-
 /** Initialize the BDD queues */
 void bfs_reqs_init(uint16_t numvars) {
   requests.numvars = numvars;
@@ -92,7 +82,7 @@ void bfs_reqs_free() {
   free(requests.reqs);
 }
 
-inline bool reqs_equal(const bdd_ptr &f,
+static inline bool reqs_equal(const bdd_ptr &f,
                        const bdd_ptr &g,
                        const bdd_ptr &h,
                        const req &request) {

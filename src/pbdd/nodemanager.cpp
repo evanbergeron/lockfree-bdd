@@ -18,14 +18,6 @@ struct bdd_vars {
   ht_bdd *bdds;
 };
 
-bdd_ptr get_hi(bdd_ptr f) {
-  return unpack_bddptr(bddptr2cptr(f)->hi);
-}
-
-bdd_ptr get_lo(bdd_ptr f) {
-  return unpack_bddptr(bddptr2cptr(f)->lo);
-}
-
 /** Globals */
 static bdd_vars *bdds = NULL;      // The chained arrays
 static uint16_t num_vars = 0u;     // Number of variables (max varid == num_vars-1)
@@ -66,38 +58,6 @@ void node_manager_free() {
   num_vars = 0u;
 }
 
-
-/** Covert a bdd_ptr to a C pointer */
-bdd *bddptr2cptr(bdd_ptr bdd_ref) {
-  if (bdd_ref == BDD_TRUE) { return BDD_TRUE_ADDR; }
-  if (bdd_ref == BDD_FALSE) { return BDD_FALSE_ADDR; }
-  return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
-}
-
-bdd *packedbddptr2cptr(bdd_ptr_packed bdd_ref) {
-  return bddptr2cptr(unpack_bddptr(bdd_ref));
-}
-
-bdd_ptr cptr2bddptr(bdd *b) {
-  bdd_ptr result;
-  result.varid = b->varid;
-  // TODO how to cleanly get idx?
-  exit(0);
-}
-
-bdd_ptr unpack_bddptr(bdd_ptr_packed b) {
-  bdd_ptr result;
-  result.varid = b.varid;
-  result.idx = b.idx;
-  return result;
-}
-
-bdd_ptr_packed pack_bddptr(bdd_ptr b) {
-  bdd_ptr_packed result;
-  result.varid = b.varid;
-  result.idx = b.idx;
-  return result;
-}
 
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
@@ -175,3 +135,15 @@ bdd *resize(bdd *bdd_array, size_t new_size) {
   }
   return result;
 }
+
+
+bdd *bddptr2cptr(bdd_ptr bdd_ref) {
+  if (bdd_ref == BDD_TRUE) { return BDD_TRUE_ADDR; }
+  if (bdd_ref == BDD_FALSE) { return BDD_FALSE_ADDR; }
+  return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
+}
+
+bdd *packedbddptr2cptr(bdd_ptr_packed bdd_ref) {
+  return bddptr2cptr(unpack_bddptr(bdd_ref));
+}
+

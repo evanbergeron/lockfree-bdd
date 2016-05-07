@@ -35,10 +35,14 @@ struct all_reqs {
 extern all_reqs requests;
 
 /** Convert a bfs request pointer to a C pointer */
-req *reqptr2cptr(req_ptr &ptr);
+inline req *reqptr2cptr(req_ptr &ptr) {
+  return &requests.reqs[ptr.varid].requests[ptr.idx];
+}
 
 /** Convert a varid and idx to a C pointer */
-req *varididx2cptr(uint16_t varid, uint32_t idx);
+inline req *varididx2cptr(uint16_t varid, uint32_t idx) {
+  return &requests.reqs[varid].requests[idx];
+}
 
 /** Initialize the BDD queues */
 void bfs_reqs_init(uint16_t numvars);
