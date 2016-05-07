@@ -110,7 +110,9 @@ Our final implementation uses the ite formulation of bfs, similar to [8]. Our un
 
 We maintain a mapping from bdd_node triples to a final bdd_result. We maintain a dynamically-resized list for each variable. The elements of the list are 4-tuples: 3 bdd_ptrs (a key) and 1 bdd node (a result).
 
-Pseudocode is presented below.
+Notably, our request is reused for both expansion and reduction, in contrast to some of the other solutions we've seen in the literature. Additionally, we maintain a counter for the size of these arrays, yielding a constant-time clearing operation (just set the counter to zero).
+
+The BFS pseudocode is presented below.
 
 {% highlight c++ %}
 void bfs_expand(f, g, h) {
