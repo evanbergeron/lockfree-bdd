@@ -88,6 +88,12 @@ bdd_ptr unpack_bddptr(bdd_ptr_packed b) {
   return result;
 }
 
+bdd_ptr_packed pack_bddptr(bdd_ptr b) {
+  bdd_ptr_packed result;
+  result.varid = b.varid;
+  result.idx = b.idx;
+  return result;
+}
 
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
