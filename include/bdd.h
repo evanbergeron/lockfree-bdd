@@ -33,6 +33,10 @@ struct op_node {
   bdd_node *g;
 };
 
+
+struct bdd_ptr;
+struct bdd;
+
 extern bdd_ptr BDD_TRUE;
 extern bdd_ptr BDD_FALSE;
 extern bdd *BDD_TRUE_ADDR;
@@ -56,6 +60,6 @@ bdd_ptr bdd_nor (bdd_ptr a, bdd_ptr b);
 bdd_ptr ithvar(int i);
 
 /* =========== Analysis Functions ========== */
-int countsat(bdd_ptr b);
+double countsat(bdd_ptr b);
 
 #endif /* BDD_H */
