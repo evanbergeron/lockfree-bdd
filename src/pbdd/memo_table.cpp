@@ -53,6 +53,12 @@ void memo_table_init(int capacity) {
   mt.hits = 0;
 }
 
+bool is_empty(const mt_table_entry &entry) {
+  return entry.F.varid == 0 && entry.F.idx == 0 &&
+         entry.G.varid == 0 && entry.G.idx == 0 &&
+         entry.H.varid == 0 && entry.H.idx == 0;
+}
+
 /**
  * Search the table for pre-computed results (F,G,H).
  * Returns a pointer to the bdd node if it was in the table, otherwise nullptr.
@@ -60,13 +66,16 @@ void memo_table_init(int capacity) {
 bdd_ptr get_result(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
 
-  if (F == mt.table[idx].F &&
-      G == mt.table[idx].G &&
-      H == mt.table[idx].H) {
-    mt.hits++;
-    return mt.table[idx].value;
+  while (!is_empty(mt.table[idx])) {
+    if (F == mt.table[idx].F &&
+        G == mt.table[idx].G &&
+        H == mt.table[idx].H) {
+      mt.hits++;
+      return mt.table[idx].value;
+    }
+    idx++;
+    mt.misses++;
   }
-  mt.misses++;
 
   /* return nullptr; */
 }
@@ -76,6 +85,10 @@ bdd_ptr get_result(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
  */
 void put_result(bdd_ptr F, bdd_ptr G, bdd_ptr H, bdd_ptr result) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
+
+  while (!is_empty(mt.table[idx])) {
+    idx++;
+  }
 
   mt.table[idx].F = F;
   mt.table[idx].G = G;
@@ -88,9 +101,17 @@ void put_result(bdd_ptr F, bdd_ptr G, bdd_ptr H, bdd_ptr result) {
  */
 bool contains_key(bdd_ptr F, bdd_ptr G, bdd_ptr H) {
   int idx = hash(F, G, H) % (uint32_t)mt.size;
-  return F == mt.table[idx].F &&
-         G == mt.table[idx].G &&
-         H == mt.table[idx].H;
+
+  while (!is_empty(mt.table[idx])) {
+    if (mt.table[idx].F == F &&
+        mt.table[idx].G == G &&
+        mt.table[idx].H == H) {
+      return true;
+    }
+    idx++;
+  }
+
+  return false;
 }
 
 void print_mt_stats() {
