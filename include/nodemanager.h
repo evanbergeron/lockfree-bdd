@@ -56,13 +56,13 @@ bdd_ptr new_node(unsigned varid);
 
 /** Convert a bdd_ptr to a C pointer */
 bdd *bddptr2cptr(bdd_ptr bdd_ref);
+bdd *packedbddptr2cptr(bdd_ptr_packed bdd_ref);
 bdd_ptr cptr2bddptr(bdd *b);
 bdd_ptr unpack_bddptr(bdd_ptr_packed p);
 bdd_ptr_packed pack_bddptr(bdd_ptr p);
 
 bdd_ptr get_lo(bdd_ptr f);
 bdd_ptr get_hi(bdd_ptr f);
-
 
 /** Lookup or insert a value */
 bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi);

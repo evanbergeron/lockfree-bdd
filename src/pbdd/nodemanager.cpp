@@ -74,6 +74,10 @@ bdd *bddptr2cptr(bdd_ptr bdd_ref) {
   return (bdd *)(bdds[bdd_ref.varid].bdds + bdd_ref.idx);
 }
 
+bdd *packedbddptr2cptr(bdd_ptr_packed bdd_ref) {
+  return bddptr2cptr(unpack_bddptr(bdd_ref));
+}
+
 bdd_ptr cptr2bddptr(bdd *b) {
   bdd_ptr result;
   result.varid = b->varid;
