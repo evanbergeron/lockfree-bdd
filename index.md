@@ -9,6 +9,8 @@ Evan Bergeron, Kevin Zheng
 
 We implemented a parallel binary decision diagram library, focusing on spatial locality and cache coherence. The key data structure is a collection of lockfree hash tables that doubles as a memory allocator, garbage collector, and directed graph.
 
+Our preliminary tests suggest that our cache locality optimizations reduce last-level cache misses from roughly 20% to less than 1%.
+
 ## Background
 
 Binary decision diagrams (BDDs) are directed graphs that represent boolean functions. Once constructed, these graphs provide constant time equivalence checking. Unfortunately, constructing these graphs can be costly.
@@ -173,6 +175,8 @@ These hash tables support essentially one operation: lookup_or_insert. This is a
 ## Results
 
 This section is in progress. We finally have a working implementation and are currently benchmarking. Our test suite includes nqueens of various sizes and a couple of ISCA85 circuits, in particular the C1908 circuit.
+
+Preliminary cachegrind results suggest that our last-level cache miss rate is well under 1% with our bfs implementation, as compared to roughly 20% with the dfs implementation. That being said, we pay the price in the smaller caches, due to our larger memory footprint. Overall, the bfs implementation consistently out-performed our dfs one.
 
 ## Future Work
 
