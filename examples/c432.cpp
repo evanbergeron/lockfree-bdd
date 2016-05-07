@@ -1,7 +1,7 @@
 #include "bdd.h"
 #include <iostream>
 int main() {
-bdd_init(46656,46656,46656);
+bdd_init(1000000,1000000,40);
 bdd_ptr v1 = ithvar(0);
 bdd_ptr v4 = ithvar(1);
 bdd_ptr v8 = ithvar(2);
