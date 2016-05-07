@@ -177,6 +177,7 @@ bdd_ptr nqueens(int n) {
 }
 
 int main(int argc, char **argv) {
-  nqueens(atoi(argv[1]));
+  bdd_ptr result = nqueens(atoi(argv[1]));
+  std::cout << countsat(result) << std::endl;
   return 0;
 }

@@ -1,3 +1,4 @@
+#include <iostream>
 #include "bdd.h"
 #include "visualize.h"
 
@@ -13,6 +14,8 @@ int main() {
   /* bdd_node *result = bdd_or(a,b); */
 
   bdd_graphviz(result);
+
+  std::cout << countsat(result) << std::endl;
 
   std::vector<std::map<int, bool>> *sats = allsat(result);
   for (auto &sat : (*sats)) {
