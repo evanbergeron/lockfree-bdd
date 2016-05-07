@@ -147,7 +147,9 @@ bdd_ptr ndiag_constraints(int n) {
 void make_board(int n) {
 
   // Probably big enough?
-  bdd_init(n * n * n * n, n * n * n * n, n * n);
+  uint32_t node_cache_size = 1 << 25;
+  uint16_t num_vars = n*n+2;
+  bdd_init(node_cache_size, node_cache_size, num_vars);
 
   /*
    * Make variables for each board cell.
@@ -175,6 +177,6 @@ bdd_ptr nqueens(int n) {
 }
 
 int main(int argc, char **argv) {
-  bdd_graphviz(nqueens(atoi(argv[1])));
+  nqueens(atoi(argv[1]));
   return 0;
 }
