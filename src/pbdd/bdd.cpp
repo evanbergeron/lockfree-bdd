@@ -89,6 +89,10 @@ bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b) {
   return bdd_op(OP_AND, a, b);
 }
 
+bdd_ptr bdd_not(bdd_ptr a) {
+  return ite(a, BDD_FALSE, BDD_TRUE);
+}
+
 bdd_ptr ithvar(int i) {
   return lookup_or_insert(i, BDD_FALSE, BDD_TRUE);
 }
