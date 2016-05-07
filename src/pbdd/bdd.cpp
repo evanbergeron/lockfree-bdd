@@ -29,15 +29,12 @@ bdd_ptr ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   // TODO check cache for prev result
 
   int min_varid = MIN3(f.varid, g.varid, h.varid);
-  bdd *F = bddptr2cptr(f);
-  bdd *G = bddptr2cptr(g);
-  bdd *H = bddptr2cptr(h);
-  bdd_ptr fv = (f.varid == min_varid) ? unpack_bddptr(F->lo) : f;
-  bdd_ptr gv = (g.varid == min_varid) ? unpack_bddptr(G->lo) : g;
-  bdd_ptr hv = (h.varid == min_varid) ? unpack_bddptr(H->lo) : h;
-  bdd_ptr fvn = (f.varid == min_varid) ? unpack_bddptr(F->hi) : f;
-  bdd_ptr gvn = (g.varid == min_varid) ? unpack_bddptr(G->hi) : g;
-  bdd_ptr hvn = (h.varid == min_varid) ? unpack_bddptr(H->hi) : h;
+  bdd_ptr fv = (f.varid == min_varid) ? get_lo(f) : f;
+  bdd_ptr gv = (g.varid == min_varid) ? get_lo(g) : g;
+  bdd_ptr hv = (h.varid == min_varid) ? get_lo(h) : h;
+  bdd_ptr fvn = (f.varid == min_varid) ? get_hi(f) : f;
+  bdd_ptr gvn = (g.varid == min_varid) ? get_hi(g) : g;
+  bdd_ptr hvn = (h.varid == min_varid) ? get_hi(h) : h;
 
   bdd_ptr t;
   bdd_ptr e;
