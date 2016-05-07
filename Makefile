@@ -38,4 +38,12 @@ nodemanager_tests:
 	make
 	$(CC) $(CFLAGS) test/nodemanager_tests.cpp $(PBDD) $(INC) $(LIB) -o bin/nodemanager_tests
 
+c432:
+	make
+	$(CC) $(CFLAGS) examples/c432.cpp $(PBDD) $(INC) $(LIB) -o bin/c432
+
+c1908:
+	make
+	$(CC) $(CFLAGS) examples/c1908.cpp $(PBDD) $(INC) $(LIB) -o bin/c1908
+
 .PHONY: clean
