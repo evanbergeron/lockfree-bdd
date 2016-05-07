@@ -17,6 +17,9 @@ static bool reqs_equal(const bdd_ptr &f,
 /** All the requests */
 all_reqs requests;
 
+/** The termainal request signal */
+bdd_ptr_packed terminal_req_signal;
+
 /** Get a cannonical pointer to a request */
 req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   uint16_t min_varid = MIN3(f.varid, g.varid, h.varid);
@@ -36,7 +39,8 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   // Not in array, insert at tail
   // First, check if we need to resize
   if (reqs->capacity == reqs->numnodes) {
-    reqs->requests = (req *)realloc(reqs->requests, reqs->capacity*RESIZE_FACTOR); 
+    reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*reqs->capacity*RESIZE_FACTOR); 
+    reqs->capacity *= RESIZE_FACTOR;
   }
 
   // Then, insert at tail
@@ -63,6 +67,13 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   return result;
 }
 
+/** Zero out the request queues */
+void bfs_reqs_reset() {
+  for (uint16_t i = 0; i < requests.numvars; i++) {
+    requests.reqs[i].numnodes = 0u;
+  }
+}
+
 /** Initialize the BDD queues */
 void bfs_reqs_init(uint16_t numvars) {
   requests.numvars = numvars;
@@ -72,6 +83,8 @@ void bfs_reqs_init(uint16_t numvars) {
     requests.reqs[i].numnodes = 0u;
     requests.reqs[i].requests = (req *)calloc(sizeof(req), INITIAL_CHAINSIZE);
   }
+  terminal_req_signal.varid = UINT16_MAX - 0xf;
+  terminal_req_signal.idx = UINT32_MAX;
 }
 
 /** Free the BDD queues */

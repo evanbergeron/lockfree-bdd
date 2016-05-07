@@ -34,6 +34,8 @@ struct all_reqs {
 
 extern all_reqs requests;
 
+extern bdd_ptr_packed terminal_req_signal;
+
 /** Convert a bfs request pointer to a C pointer */
 inline req *reqptr2cptr(req_ptr &ptr) {
   return &requests.reqs[ptr.varid].requests[ptr.idx];
@@ -43,6 +45,9 @@ inline req *reqptr2cptr(req_ptr &ptr) {
 inline req *varididx2cptr(uint16_t varid, uint32_t idx) {
   return &requests.reqs[varid].requests[idx];
 }
+
+/** Zero out the requests */
+void bfs_reqs_reset();
 
 /** Initialize the BDD queues */
 void bfs_reqs_init(uint16_t numvars);
