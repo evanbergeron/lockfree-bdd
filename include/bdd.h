@@ -50,6 +50,9 @@ bdd_ptr bdd_apply(bool_op op, bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_and(bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_or (bdd_ptr a, bdd_ptr b);
 bdd_ptr bdd_not(bdd_ptr a);
+bdd_ptr bdd_xor (bdd_ptr a, bdd_ptr b);
+bdd_ptr bdd_nand (bdd_ptr a, bdd_ptr b);
+bdd_ptr bdd_nor (bdd_ptr a, bdd_ptr b);
 bdd_ptr ithvar(int i);
 
 #endif /* BDD_H */
