@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <iostream>
 #include <assert.h>
 #include <stdint.h>
 #include "bfs_reqs.h"
@@ -36,11 +37,13 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 
   // negative return means that the value was found
   if (ht_idx < 0) {
+    std::cout << "hit" << std::endl;
     req_ptr result;
     result.varid = min_varid;
     result.idx = (uint32_t)((-ht_idx) - 1);
     return result;
   }
+  std::cout << "miss" << std::endl;
 
   assert(ht_idx != 0);
 
