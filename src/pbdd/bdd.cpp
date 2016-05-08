@@ -114,7 +114,8 @@ req *get_req_lo(req *r) {
  */
 void bf_ite_reduce() {
   for (int varid = requests.numvars - 1; varid >= 0; varid--) {
-    // TODO data parallelism
+    // TODO data parallelis
+    #pragma omp parallel for
     for (int i = 0; i < requests.reqs[varid].numnodes; i ++) {
 
       // This is the request node we're reducing right now
