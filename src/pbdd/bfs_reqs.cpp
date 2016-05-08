@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "bfs_reqs.h"
+#include "bfs_reqs_ht.h"
 #include "nodemanager.h"
 
 #define INITIAL_CHAINSIZE 1024u
@@ -27,16 +28,22 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   var_reqs *reqs = &requests.reqs[min_varid];
 
   // Check for membership
-  for (uint32_t i = 0; i < reqs->numnodes; i++) {
-    if (reqs_equal(f, g, h, reqs->requests[i])) {
-      req_ptr result;
-      result.varid = min_varid;
-      result.idx = i;
-      return result;
-    }
+  int32_t ht_idx = bfs_ht_lookup_or_insert(requests.reqs[min_varid].requests_ht,
+                                         pack_bddptr(f),
+                                         pack_bddptr(g),
+                                         pack_bddptr(h));
+
+  // negative return means that the value was found
+  if (ht_idx < 0) {
+    req_ptr result;
+    result.varid = min_varid;
+    result.idx = (uint32_t)(-ht_idx - 1);
+    return result;
   }
 
-  uint32_t idx = __atomic_fetch_add(&reqs->numnodes, 1, __ATOMIC_CONSUME);
+  ht_idx--;
+
+  uint32_t idx = (uint32_t)ht_idx;
   uint32_t cap = __atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME);
 
   // Not in array, insert at tail
@@ -44,7 +51,7 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (cap == idx) {
     // This is the resizing thread
     reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
-    __atomic_store_n(&reqs->capacity, cap*2, __ATOMIC_CONSUME);
+    __atomic_store_n(&reqs->capacity, cap*2, __ATOMIC_RELAXED);
   } else if (cap < idx) {
     // These threads will wait until the array is resized
     while (__atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME) < idx);
@@ -75,6 +82,7 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 void bfs_reqs_reset() {
   for (uint16_t i = 0; i < requests.numvars; i++) {
     requests.reqs[i].numnodes = 0u;
+    bfs_ht_clear(requests.reqs[i].requests_ht);
   }
 }
 
@@ -86,6 +94,7 @@ void bfs_reqs_init(uint16_t numvars) {
     requests.reqs[i].capacity = INITIAL_CHAINSIZE;
     requests.reqs[i].numnodes = 0u;
     requests.reqs[i].requests = (req *)calloc(sizeof(req), INITIAL_CHAINSIZE);
+    requests.reqs[i].requests_ht = bfs_ht_init(i);
   }
   terminal_req_signal.varid = UINT16_MAX - 0xf;
   terminal_req_signal.idx = UINT32_MAX;
@@ -97,16 +106,4 @@ void bfs_reqs_free() {
     free(requests.reqs[i].requests);
   }
   free(requests.reqs);
-}
-
-static inline bool reqs_equal(const bdd_ptr &f,
-                       const bdd_ptr &g,
-                       const bdd_ptr &h,
-                       const req &request) {
-  return f.varid == request.f.varid &&
-         g.varid == request.g.varid &&
-         h.varid == request.h.varid &&
-         f.idx == request.f.idx &&
-         g.idx == request.g.idx &&
-         h.idx == request.h.idx;
 }
