@@ -1,11 +1,11 @@
 #include <assert.h>
+#include <iostream>
 #include <stdint.h>
 #include <stdlib.h>
 #include "nodemanager.h"
 #include "bfs_reqs_ht.h"
 
 #define INITIAL_HT_SIZE (1 << 15)
-#define NULL_IDX  UINT32_MAX
 #define ATOMICITY __ATOMIC_RELAXED
 
 /** A request key */
@@ -88,12 +88,6 @@ inline void make_req_key(uint32_t varid,
 bfs_ht *bfs_ht_init(uint16_t varid) {
   bfs_ht *ht = (bfs_ht *)malloc(sizeof(bfs_ht));
   ht->ht = (bfs_ht_bucket *)calloc(sizeof(bfs_ht_bucket), INITIAL_HT_SIZE);
-
-  #pragma omp parallel for
-  for (uint32_t i = 0; i < INITIAL_HT_SIZE; i++) {
-    ht->ht[i].req_idx = NULL_IDX;
-  }
-
   ht->size = INITIAL_HT_SIZE;
   ht->elems = 0;
   ht->next_idx = 0;
@@ -115,7 +109,7 @@ void bfs_ht_clear(bfs_ht *ht) {
   #pragma omp parallel for
   for (uint32_t i = 0; i < ht->size; i++) {
     ht->ht[i].key.raw = 0;
-    ht->ht[i].req_idx = NULL_IDX;
+    ht->ht[i].req_idx = 0;
   }
 }
 
@@ -143,19 +137,19 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
     
     // Did the write go through?
     if (success) {
-      uint32_t idx = __atomic_fetch_add(&ht->next_idx, 1, ATOMICITY);
+      uint32_t idx = __atomic_add_fetch(&ht->next_idx, 1, ATOMICITY);
       __atomic_fetch_add(&ht->elems, 1, ATOMICITY);
       __atomic_store_n(&ht->ht[i].req_idx, idx, ATOMICITY);
       assert(idx < INT32_MAX);
-      return (int32_t) idx + 1;
+      return (int32_t) idx;
     }
     
     // Did we find the key?
     else if (expected.raw == key.raw) {
       uint32_t idx;
-      while ((idx = __atomic_load_n(&ht->ht[i].req_idx, ATOMICITY)) == NULL_IDX); 
+      while ((idx = __atomic_load_n(&ht->ht[i].req_idx, ATOMICITY)) == 0); 
       assert(idx < INT32_MAX);
-      return -((int32_t)idx) - 1;
+      return -((int32_t)idx);
     }
   }
 }

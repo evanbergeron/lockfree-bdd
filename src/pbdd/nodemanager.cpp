@@ -84,11 +84,8 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
   ht_bdd *bdd_array = bdds[varid].bdds;
   uint32_t length = bdds[varid].length;
 
-  uint32_t iters = 0;
-
   // Search through the array
   for (uint32_t i = hash(&to_find); ; i++) {
-    iters++;
     i %= length;
 
     // Create a dummy node
@@ -119,7 +116,6 @@ bdd_ptr lookup_or_insert(uint16_t varid, bdd_ptr lo, bdd_ptr hi) {
       // Write didn't go through, the value here is not equal
     }
   }
-  std::cout << iters << std::endl;
 }
 
 /** Hash a bdd node */
