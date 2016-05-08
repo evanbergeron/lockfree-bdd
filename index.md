@@ -169,14 +169,36 @@ This struct represents a node in our BDDs. The lo and hi pointers represent edge
 Since the pointers to lo and hi lead to another location in this data structure, we've effectively embedded the directed graphs directly into the hash tables.
 
 Note that the bdd_ptr_packed structs are inlined. This is done with the intent of reducing memory accesses. Our bdd_apply function needs to know the id of the two children nodes. These structs contain the varids, so we avoid an additional dereference of a value that's likely to be a cache miss.
-
 These hash tables support essentially one operation: lookup_or_insert. This is a combined find and put, essentially. We hash the key and linearly probe across using compare and swap. If we find the key we're looking for, we atomically increment the refcount. If we find an empty space, we insert here.
 
 ## Results
 
 This section is in progress. We finally have a working implementation and are currently benchmarking. Our test suite includes nqueens of various sizes and a couple of ISCA85 circuits, in particular the C1908 circuit.
 
-Preliminary cachegrind results suggest that our last-level cache miss rate is well under 1% with our bfs implementation, as compared to roughly 20% with the dfs implementation. That being said, we pay the price in the smaller caches, due to our larger memory footprint. Overall, the bfs implementation consistently out-performed our dfs one.
+The most promising results we have so far include:
+
+* Running on an Intel Core i5 locally, small nqueens and circuit examples with BFS demonstrate significantly fewer cache misses than with DFS, specifically in the lowest-level cache. This difference can be as extreme as a 1% to 20% ratio, though many cases only see a factor of 2-4.
+
+* We've obtained 30% speedup on two cores for small examples (nqueens up to 7x7 with the naive encoding and the c1908 circuit).
+
+* Overall, the BFS implementation routinely out-performs our DFS one.
+
+* On small examples, we're within an order of magnitude of BuDDy.
+
+### Bottlenecks
+
+Cachegrind and gprof results suggests that our largest bottleneck in both speedup and cache locality is maintaining an effective request set for BFS expand/reduce. Each call requires a new set, but free-ing and reallocating the sets is prohibitively expensive.
+
+We're working on a hash table that provides
+
+* parallel read and writes
+* cache-locality (no separate chaining)
+* versioning (giving a O(1) delete_all operation)
+* resizing (we can't predict how many node we'll need)
+
+Larger examples have proven to be unwieldy. If we free our BFS hash tables, our performance plummets. If we don't free our hash tables, we quickly eat up all the memory on the system.
+
+Our suspicion is that after this BFS hash table is completed, we'll get a good deal of speedup on increasing number of cores with larger examples.
 
 ## Future Work
 
