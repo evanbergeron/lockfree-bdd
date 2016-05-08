@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 #include <stdint.h>
 #include "bfs_reqs.h"
 #include "bfs_reqs_ht.h"
@@ -37,12 +38,15 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (ht_idx < 0) {
     req_ptr result;
     result.varid = min_varid;
-    result.idx = (uint32_t)(-ht_idx - 1);
+    result.idx = (uint32_t)((-ht_idx) - 1);
     return result;
   }
 
+  assert(ht_idx != 0);
+
   ht_idx--;
 
+  __atomic_fetch_add(&reqs->numnodes, 1, __ATOMIC_CONSUME);
   uint32_t idx = (uint32_t)ht_idx;
   uint32_t cap = __atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME);
 
