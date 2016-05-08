@@ -50,7 +50,7 @@ bdd_ptr terminal_case(bdd_ptr f,bdd_ptr g, bdd_ptr h) {
 void bf_ite_expand() {
   for (int varid = 0; varid < requests.numvars; varid++) {
     // TODO data parallelism
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < requests.reqs[varid].numnodes; i++) {
 
       req *cur_req = varididx2cptr(varid, i);
@@ -177,9 +177,7 @@ bdd_ptr bf_ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (is_terminal(f, g, h)) { return terminal_case(f, g, h); }
   bfs_reqs_reset();
   req_ptr initial_request = bfs_reqs_lookup_or_insert(f, g, h);
-  std::cout << "expand" << std::endl;
   bf_ite_expand();
-  std::cout << "reduce" << std::endl;
   bf_ite_reduce();
   return unpack_bddptr(reqptr2cptr(initial_request)->result.lo);
 }
@@ -245,9 +243,11 @@ bdd_ptr ite_deploy(bool_op op, bdd_ptr a, bdd_ptr b) {
       assert(false);
       return result;
   }
+#ifdef PRINT_STATS
   std::cout << "---" << op << "---" << std::endl;
   node_manager_print_stats();
   print_mt_stats();
+#endif
   return result;
 }
 
@@ -312,7 +312,7 @@ void bdd_init(uint32_t chainsize, uint32_t cachesize, uint16_t num_vars) {
   BDD_TRUE_ADDR->refcount = UINT16_MAX;
 
   node_manager_init(num_vars, chainsize);
-  memo_table_init(cachesize);
+  //memo_table_init(cachesize);
   bfs_reqs_init(num_vars);
 }
 

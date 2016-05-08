@@ -86,7 +86,8 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 void bfs_reqs_reset() {
   for (uint16_t i = 0; i < requests.numvars; i++) {
     requests.reqs[i].numnodes = 0u;
-    bfs_ht_clear(requests.reqs[i].requests_ht);
+    //bfs_ht_free(requests.reqs[i].requests_ht);
+    requests.reqs[i].requests_ht = bfs_ht_init(i);
   }
 }
 
