@@ -177,7 +177,9 @@ bdd_ptr bf_ite(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   if (is_terminal(f, g, h)) { return terminal_case(f, g, h); }
   bfs_reqs_reset();
   req_ptr initial_request = bfs_reqs_lookup_or_insert(f, g, h);
+  std::cout << "expand" << std::endl;
   bf_ite_expand();
+  std::cout << "reduce" << std::endl;
   bf_ite_reduce();
   return unpack_bddptr(reqptr2cptr(initial_request)->result.lo);
 }

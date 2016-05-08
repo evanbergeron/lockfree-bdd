@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "nodemanager.h"
 #include "bdd.h"
+#include "bfs_reqs_ht.h"
 
 typedef bdd_ptr req_ptr;
 
@@ -23,6 +24,7 @@ struct req {
  */
 struct var_reqs {
   req *requests;      // Array of requests
+  bfs_ht *requests_ht;// Hashtable of requests
   uint32_t capacity;  // Length of the array
   uint32_t numnodes;  // Number of requests in the array
 };
