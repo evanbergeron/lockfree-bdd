@@ -49,7 +49,6 @@ bdd_ptr terminal_case(bdd_ptr f,bdd_ptr g, bdd_ptr h) {
  */
 void bf_ite_expand() {
   for (int varid = 0; varid < requests.numvars; varid++) {
-    // TODO data parallelism
     #pragma omp parallel for
     for (int i = 0; i < requests.reqs[varid].numnodes; i++) {
 
@@ -114,7 +113,6 @@ req *get_req_lo(req *r) {
  */
 void bf_ite_reduce() {
   for (int varid = requests.numvars - 1; varid >= 0; varid--) {
-    // TODO data parallelis
     #pragma omp parallel for
     for (int i = 0; i < requests.reqs[varid].numnodes; i ++) {
 

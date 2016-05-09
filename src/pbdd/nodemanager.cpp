@@ -7,7 +7,7 @@
 #include "bdd.h"
 
 #define INITIAL_CHAIN_SIZE 1024u
-#define ATOMICITY __ATOMIC_RELAXED
+#define ATOMICITY __ATOMIC_SEQ_CST
 
 /** Node manager structures */
 union ht_bdd {

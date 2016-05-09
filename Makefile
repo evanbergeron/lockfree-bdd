@@ -7,8 +7,8 @@ SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 WFLAGS := -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef -Wno-unused -Wpointer-arith -Wconversion -Wpointer-arith -Wconversion
-CFLAGS := -O2 -g -std=c++11 -march=native $(WFLAGS)
-FFLAGS := #-fopenmp
+CFLAGS := -O3 -g -std=c++11 -march=native $(WFLAGS)
+FFLAGS := -fopenmp
 LIB := -L lib -lpthread
 INC := -I include
 PBDD := build/pbdd/*.o
