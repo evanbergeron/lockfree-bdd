@@ -1,5 +1,4 @@
 #include <iostream>
-#include <omp.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
@@ -18,7 +17,6 @@ static bool reqs_equal(const bdd_ptr &f,
                 const bdd_ptr &g,
                 const bdd_ptr &h,
                 const req &request);
-static pthread_barrier_t barrier;
 
 /** All the requests */
 all_reqs requests;
@@ -54,25 +52,15 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   uint32_t cap = __atomic_load_n(&reqs->capacity, ATOMICITY);
 
   // we're over capacity 
-  if (cap/2 <= idx) { // LOLOL
-
-    // got the resize lock
-    if (!__atomic_test_and_set(&reqs->requests_resize_lock, ATOMICITY)) {
-      std::cout << "Resizing" << std::endl;
-      reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
-      __atomic_store_n(&reqs->capacity, cap*RESIZE_FACTOR, ATOMICITY);
-      __atomic_clear(&reqs->requests_resize_lock, ATOMICITY);
-    }
-    
-    // did not get the resize lock
-    else {
-      while (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0);
-    }
+  if (idx > cap) {
+    while (idx > __atomic_load_n(&reqs->capacity, ATOMICITY)); 
   }
-  
-  // there's a resize going on now, so wait
-  else if (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0) {
-    while (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0);
+
+  // This is the resizer thread
+  else if (idx == cap) {
+    while (__atomic_load_n(&reqs->numnodes, ATOMICITY) < cap);
+    reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
+    __atomic_store_n(&reqs->capacity, cap*RESIZE_FACTOR, ATOMICITY);
   }
 
   // Then, insert at tail
