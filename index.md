@@ -173,17 +173,9 @@ These hash tables support essentially one operation: lookup_or_insert. This is a
 
 ## Results
 
-This section is in progress. We finally have a working implementation and are currently benchmarking. Our test suite includes nqueens of various sizes and a couple of ISCA85 circuits, in particular the C1908 circuit.
+<img src="http://i.imgur.com/ceJv9vw.png " width="100%" />
 
-The most promising results we have so far include:
-
-* Running on an Intel Core i5 locally, small nqueens and circuit examples with BFS demonstrate significantly fewer cache misses than with DFS, specifically in the lowest-level cache. This difference can be as extreme as a 1% to 20% ratio, though many cases only see a factor of 2-4.
-
-* We've obtained 30% speedup on two cores for small examples (nqueens up to 7x7 with the naive encoding and the c1908 circuit).
-
-* Overall, the BFS implementation routinely out-performs our DFS one.
-
-* On small examples, we're within an order of magnitude of BuDDy.
+The above is a plot of the speedup we obtain when running the C3540 circuit. These tests were run on Xeon E5645 CPUs. These machines are 6 cores, with 12 total execution contexts.
 
 ### Bottlenecks
 
