@@ -211,8 +211,6 @@ The size of the resulting BDD can be highly dependent on the ordering of variabl
 
 Additionally, we'd be interested in implementing a hybrid DFS/BFS traversal in the spirit of [4, 5, 6].
 
-## Lessons Learned
-
 ## References
 
 [1] Randal E. Bryant. Graph-Based Algorithms for Boolean Function Manipulation.
