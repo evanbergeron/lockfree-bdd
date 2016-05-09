@@ -122,7 +122,7 @@ void bfs_expand(f, g, h) {
   make new bdd_node r;
   create_request(f, g, h, r);
   for each varid
-    for each request of this varid
+    parallel for: for each request of this varid
       expand lo and hi, add to appropriate queue
 }
 {% endhighlight %}
@@ -130,7 +130,7 @@ void bfs_expand(f, g, h) {
 {% highlight c++ %}
 void bfs_reduce() {
   for each varid, starting from the bottom
-    for each request of this varid
+    parallel for: for each request of this varid
       if either child is a forwarding node,
         grab the node they forward to
       if lo == hi, make yourself a forwarding node
@@ -181,7 +181,11 @@ To support this operation, we introduced a version counter. Each element in the 
 
 Our final implementation maintains an array and hash table for each variable id. The array stores result nodes, all of which will eventually be forwarded into the unique table. The hash table's keys are (f, g, h) triples. The values are indicies into the array.
 
-All of these data structures are accessed in parallel by multiple threads. The array supports lock-free atomic updates and resizing. The hash table uses fine-grained locking with an open-addressing, linear probing scheme.
+All of these data structures are accessed in parallel by multiple threads. The array supports lock-free atomic updates and resizing. The hash table uses fine-grained locking with an open-addressing, linear probing scheme. Notably, we implemented these locks ourselves using GCC test-and-set primitives.
+
+### Technologies
+
+We used the OpenMP parallel for construct and GCC __atomic operations for everything else.
 
 ## Results
 
