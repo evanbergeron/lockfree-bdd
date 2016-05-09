@@ -150,7 +150,7 @@ Our implementation has two key data structures:
 
 * **The unique table**: a collection of lockfree hash tables that double as a directed graphs and memory allocators
 
-* **The memo table**: an additional auxiliary memoization table
+* **The request table**: a collection of lockfree resizing arrays paired with a collection of fine-grained-locking, versioned hash tables.
 
 ### The Unique Table
 
@@ -172,7 +172,18 @@ This struct represents a node in our BDDs. The lo and hi pointers represent edge
 Since the pointers to lo and hi lead to another location in this data structure, we've effectively embedded the directed graphs directly into the hash tables.
 
 Note that the bdd_ptr_packed structs are inlined. This is done with the intent of reducing memory accesses. Our bdd_apply function needs to know the id of the two children nodes. These structs contain the varids, so we avoid an additional dereference of a value that's likely to be a cache miss.
+
 These hash tables support essentially one operation: lookup_or_insert. This is a combined find and put, essentially. We hash the key and linearly probe across using compare and swap. If we find the key we're looking for, we atomically increment the refcount. If we find an empty space, we insert here.
+
+### The Request Table
+
+Designing an efficient request table turned out to be pretty tricky. In a typical use case, our BDD combination function is called repeatedly in quick succession. Each of these invocation needs a fresh request table. Calling malloc and free to create a new request table is prohibitively expensive, so we needed a way to get a constant-time delete_all operation.
+
+To support this operation, we introduced a version counter. Each element in the table stores its version number. Our delete_all operation simply increments the version counter.
+
+Our final implementation maintains an array and hash table for each variable id. The array stores result nodes which will eventually be forwarded into the unique table. The hash table's key are (f, g, h) triples. The values are the index into the aforementioned array.
+
+All of these data structures are accessed in parallel by multiple threads. The array supports lock-free atomic updates and resizing. The hash table uses fine-grained locking with an open-addressing, linear probing scheme.
 
 ## Results
 
@@ -180,20 +191,7 @@ These hash tables support essentially one operation: lookup_or_insert. This is a
 
 The above is a plot of the speedup we obtain when running the C3540 circuit. These tests were run on Xeon E5645 CPUs. These machines are 6 cores, with 12 total execution contexts.
 
-### Bottlenecks
-
-Cachegrind and gprof results suggests that our largest bottleneck in both speedup and cache locality is maintaining an effective request set for BFS expand/reduce. Each call requires a new set, but free-ing and reallocating the sets is prohibitively expensive.
-
-We're working on a hash table that provides
-
-* parallel read and writes
-* cache-locality (no separate chaining)
-* versioning (giving a O(1) delete_all operation)
-* resizing (we can't predict how many node we'll need)
-
-Larger examples have proven to be unwieldy. If we free our BFS hash tables, our performance plummets. If we don't free our hash tables, we quickly eat up all the memory on the system.
-
-Our suspicion is that after this BFS hash table is completed, we'll get a good deal of speedup on increasing number of cores with larger examples.
+More analysis coming soon to a theater near you.
 
 ## Future Work
 
