@@ -10,8 +10,16 @@
 
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
 
+#define bfs
+//#define dfs
+
+#ifdef dfs
+#define ITE_OP df_ite
+#endif
+
+#ifdef bfs
 #define ITE_OP bf_ite
-//#define ITE_OP df_ite
+#endif
 
 bdd_ptr BDD_TRUE;
 bdd_ptr BDD_FALSE;
@@ -309,8 +317,14 @@ void bdd_init(uint32_t chainsize, uint32_t cachesize, uint16_t num_vars) {
   BDD_TRUE_ADDR->refcount = UINT16_MAX;
 
   node_manager_init(num_vars, chainsize);
-  //memo_table_init(cachesize);
+
+#ifdef dfs
+  memo_table_init(cachesize);
+#endif
+
+#ifdef bfs
   bfs_reqs_init(num_vars, cachesize);
+#endif
 }
 
 /* ========== Analysis Functions ========= */
