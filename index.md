@@ -173,6 +173,8 @@ Note that the bdd_ptr_packed structs are inlined. This is done with the intent o
 
 These hash tables support essentially one operation: lookup_or_insert. This is a combined find and put, essentially. We hash the key and linearly probe across using compare and swap. If we find the key we're looking for, we atomically increment the refcount. If we find an empty space, we insert here.
 
+This being said, these design choices weren't without their tradeoffs. In our current implementation, we cannot support a dynamically-resizing unique table, as the array and hash tables are merged. Rehashing the keys would invalidate all the existing pointers. Given further implementation time, this would be the first order of business to address. Since BDD nodes are rarely distributed uniformly across variable ids, we result in allocating significantly more memory than needed.
+
 ### The Request Table
 
 Designing an efficient request table turned out to be pretty tricky. In a typical use case, our BDD combination function is called repeatedly in quick succession. Each of these invocation needs a fresh request table. Calling malloc and free to create a new request table is prohibitively expensive, so we needed a way to get a constant-time delete_all operation.
