@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
@@ -43,6 +44,7 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
     return result;
   }
 
+  std::cout << "idx: " << reqs->capacity << " " << ht_idx << std::endl;
   assert(ht_idx != 0);
 
   ht_idx--;
@@ -50,16 +52,32 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   __atomic_fetch_add(&reqs->numnodes, 1, ATOMICITY);
   uint32_t idx = (uint32_t)ht_idx;
   uint32_t cap = __atomic_load_n(&reqs->capacity, ATOMICITY);
+ 
+  // we're over capacity 
+  if (cap <= idx) {
 
-  // Not in array, insert at tail
-  // First, check if we need to resize
-  if (cap == idx) {
-    // This is the resizing thread
-    reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
-    __atomic_store_n(&reqs->capacity, cap*2, ATOMICITY);
-  } else if (cap < idx) {
-    // These threads will wait until the array is resized
-    while (__atomic_load_n(&reqs->capacity, ATOMICITY) < idx);
+    // got the resize lock
+    if (!__atomic_test_and_set(&reqs->requests_resize_lock, ATOMICITY)) {
+      __atomic_thread_fence(ATOMICITY);
+
+      reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
+      __atomic_store_n(&reqs->capacity, cap*RESIZE_FACTOR, ATOMICITY);
+      __atomic_clear(&reqs->requests_resize_lock, ATOMICITY);
+
+      __atomic_thread_fence(ATOMICITY);
+    }
+    
+    // did not get the resize lock
+    else {
+      __atomic_thread_fence(ATOMICITY);
+      __atomic_thread_fence(ATOMICITY);
+    }
+  }
+  
+  // there's a resize going on now, so wait
+  else if (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0) {
+      __atomic_thread_fence(ATOMICITY);
+      __atomic_thread_fence(ATOMICITY);
   }
 
   // Then, insert at tail
@@ -80,6 +98,7 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   req_ptr result;
   result.varid = min_varid;
   result.idx = idx;
+
   return result;
 }
 
@@ -100,6 +119,7 @@ void bfs_reqs_init(uint16_t numvars) {
     requests.reqs[i].numnodes = 0u;
     requests.reqs[i].requests = (req *)calloc(sizeof(req), INITIAL_CHAINSIZE);
     requests.reqs[i].requests_ht = bfs_ht_init(i);
+    requests.reqs[i].requests_resize_lock = 0;
   }
   terminal_req_signal.varid = UINT16_MAX - 0xf;
   terminal_req_signal.idx = UINT32_MAX;
