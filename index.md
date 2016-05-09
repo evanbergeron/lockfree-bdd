@@ -7,9 +7,12 @@ Evan Bergeron, Kevin Zheng
 
 ## Summary
 
-We implemented a parallel binary decision diagram library, focusing on spatial locality and cache coherence. The key data structure is a collection of lockfree hash tables that doubles as a memory allocator, garbage collector, and directed graph.
+We implemented a parallel binary decision diagram library, focusing on spatial locality and cache coherence. Our two main key data structures are
 
-Our preliminary tests suggest that our cache locality optimizations reduce last-level cache misses from roughly 20% to less than 1%.
+* A collection of lockfree hash tables that double as memory allocators and directed graphs.
+* A fine-grained-locking hash table with versioning, yielding a constant time delete_all operation.
+
+We obtain a speedup of 4 on 12 cores on the CS3540 circuit. We're currently collecting cache locality data, though our initial results are promising.
 
 ## Background
 
