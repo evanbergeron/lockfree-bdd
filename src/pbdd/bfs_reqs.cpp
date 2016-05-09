@@ -8,6 +8,7 @@
 #define INITIAL_CHAINSIZE 1024u
 #define RESIZE_FACTOR     2u
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
+#define ATOMICITY __ATOMIC_SEQ_CST
 
 
 /** Helpers */
@@ -46,19 +47,19 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 
   ht_idx--;
 
-  __atomic_fetch_add(&reqs->numnodes, 1, __ATOMIC_CONSUME);
+  __atomic_fetch_add(&reqs->numnodes, 1, ATOMICITY);
   uint32_t idx = (uint32_t)ht_idx;
-  uint32_t cap = __atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME);
+  uint32_t cap = __atomic_load_n(&reqs->capacity, ATOMICITY);
 
   // Not in array, insert at tail
   // First, check if we need to resize
   if (cap == idx) {
     // This is the resizing thread
     reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
-    __atomic_store_n(&reqs->capacity, cap*2, __ATOMIC_RELAXED);
+    __atomic_store_n(&reqs->capacity, cap*2, ATOMICITY);
   } else if (cap < idx) {
     // These threads will wait until the array is resized
-    while (__atomic_load_n(&reqs->capacity, __ATOMIC_CONSUME) < idx);
+    while (__atomic_load_n(&reqs->capacity, ATOMICITY) < idx);
   }
 
   // Then, insert at tail
@@ -86,8 +87,7 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
 void bfs_reqs_reset() {
   for (uint16_t i = 0; i < requests.numvars; i++) {
     requests.reqs[i].numnodes = 0u;
-    //bfs_ht_free(requests.reqs[i].requests_ht);
-    requests.reqs[i].requests_ht = bfs_ht_init(i);
+    bfs_ht_clear(requests.reqs[i].requests_ht);
   }
 }
 
