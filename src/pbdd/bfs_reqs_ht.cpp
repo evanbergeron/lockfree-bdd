@@ -2,11 +2,16 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "nodemanager.h"
 #include "bfs_reqs_ht.h"
 
-#define INITIAL_HT_SIZE (1 << 20)
+#define MAX_LOAD_FACTOR (0.7)
+#define INITIAL_HT_SIZE (1 << 10)
+#define RESIZE_FACTOR 4
 #define ATOMICITY __ATOMIC_SEQ_CST
+
+//#define PRINT_RESIZE_STATS
 
 /** A request key */
 struct req_key {
@@ -75,6 +80,11 @@ inline bool blocking_wait(uint8_t *lock) {
 /** Lock something */
 inline void blocking_lock(uint8_t *lock) {
   while (__atomic_test_and_set(lock, ATOMICITY));
+}
+
+/** Try to acquire the lock. Return true if succesfully acquired, else false */
+inline bool try_lock(uint8_t *lock) {
+  return !__atomic_test_and_set(lock, ATOMICITY);
 }
 
 /** Unlock something */
@@ -147,6 +157,54 @@ void bfs_ht_clear(bfs_ht *ht) {
   assert(ht->version != 0);
 }
 
+/** Resize the hashtable */
+void resize(bfs_ht *ht, uint32_t newsize) {
+  bool lock_acquired = try_lock(&ht->is_resizing);
+  if (!lock_acquired) {
+    return;
+  }
+
+#ifdef PRINT_RESIZE_STATS
+  std::cout << "========" << std::endl;
+  std::cout << "varid: " << ht->varid << std::endl;
+  std::cout << "elems: " << ht->elems << std::endl;
+  std::cout << "old: " << ht->size << std::endl;
+  std::cout << "new: " << newsize << std::endl;
+#endif
+
+  // Wait for all threads except us to exit
+  while (__atomic_load_n(&ht->cur_num_threads, ATOMICITY) != 1);
+
+  // Perform the resize
+  bfs_ht_bucket *old_ht = ht->ht;
+  uint32_t old_size = ht->size;
+
+  bfs_ht_bucket *new_ht = (bfs_ht_bucket *)calloc(sizeof(bfs_ht_bucket), newsize);
+
+  for (uint32_t old_i = 0; old_i < old_size; old_i++) {
+    ht_key key = old_ht[old_i].key;
+    uint32_t version = old_ht[old_i].value.value.version;
+    if (key.raw == 0 || version != ht->version) {
+      continue;
+    }
+
+    for (uint32_t new_i = hash(key.key); ; new_i++) {
+      new_i %= newsize;
+      if (new_ht[new_i].key.raw == 0) {
+        memcpy(&new_ht[new_i], &old_ht[old_i], sizeof(bfs_ht_bucket));
+        break;
+      }
+    }
+  }
+
+  ht->ht = new_ht;
+  ht->size = newsize;
+
+  unlock(&ht->is_resizing);
+
+  free(old_ht);
+}
+
 /** Lookup or insert an element into the bfs_ht. Return the value of the counter */
 int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
                                 const bdd_ptr_packed &f,
@@ -159,6 +217,8 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
 
   // Wait for the resize to complete
   blocking_wait(&ht->is_resizing);
+
+  __atomic_fetch_add(&ht->cur_num_threads, 1, ATOMICITY);
 
   uint32_t iters = 0;
 
@@ -193,7 +253,8 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
         // Keys match - return the value here
         if (cur_key.raw == key.raw) {
           uint32_t idx = __atomic_load_n(&ht->ht[i].value.value.req_idx, ATOMICITY);
-      assert(idx != 0); 
+          assert(idx != 0); 
+          __atomic_fetch_sub(&ht->cur_num_threads, 1, ATOMICITY);
           return -((int32_t)idx);
         }
 
@@ -225,7 +286,8 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
       // This is the one we want
       if (cur_key.raw == key.raw) {
         uint32_t idx = __atomic_load_n(&ht->ht[i].value.value.req_idx, ATOMICITY);
-      assert(idx != 0); 
+        assert(idx != 0); 
+        __atomic_fetch_sub(&ht->cur_num_threads, 1, ATOMICITY);
         return -((int32_t)idx);
       }
 
@@ -250,7 +312,12 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
 
       unlock(&ht->ht[i].lock);
 
+      if (((float) elems) / ((float) ht->size) > MAX_LOAD_FACTOR) {
+        resize(ht, ht->size * RESIZE_FACTOR);
+      }
+
       assert(idx != 0); 
+      __atomic_fetch_sub(&ht->cur_num_threads, 1, ATOMICITY);
       return (int32_t)idx;
 
     }
