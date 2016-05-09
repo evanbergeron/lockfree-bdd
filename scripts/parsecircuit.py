@@ -57,7 +57,7 @@ def emit(cir, f=sys.stdout):
     writeln(f, 'std::cout << {line} << std::endl;'.format(line=linenum))
     linenum += 1
 
-    if gate == 'BUFF':
+    if 'buf' in gate.lower():
       emitbuff(var, ops[0], f)
       continue
 
