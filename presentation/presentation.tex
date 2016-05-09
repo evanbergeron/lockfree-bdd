@@ -1,0 +1,233 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\usepackage{graphicx}
+
+\title{Parallel BDDs}
+\date{\today}
+\author{Evan Bergeron, Kevin Zheng}
+% \institute{CMU}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\begin{frame}
+We implemented a parallel binary decision diagram library, focusing on spatial locality and cache coherence.
+\end{frame}
+
+\begin{frame}
+Binary decision diagrams (BDDs) are directed graphs that represent boolean functions. Once constructed, these graphs provide constant time equivalence checking. Unfortunately, constructing these graphs can be costly.
+\end{frame}
+
+\begin{frame}{Main Data Structures}
+A collection of lockfree hash tables that double as memory allocators and directed graphs.
+
+A fine-grained-locking hash table with versioning, yielding a constant time delete_all operation.
+\end{frame}
+
+\section{Approach}
+
+\begin{frame}{DFS}
+Initial serial implementation DFS'd on the graph using the if-then-else normal form operation as described in [2].
+
+We wanted to focus on getting BFS to work for high degrees of data parallelism.
+\end{frame}
+
+\begin{frame}
+A lossy memoization cache is shared between workers to avoid duplicate work.
+
+Additionally, the DAG and unique table are merged as described in [2] to reduce memory footprint.
+\end{frame}
+
+\section{The Quest for Spatial Locality}
+
+\begin{frame}{Open Addressing}
+Our initial unique table used separate chaining with linked lists in each bucket. After decided that we wanted to focus on memory locality, we switched a linear-probing, open-addressing scheme.
+
+In a parallel context, this hash table must be able to be read and written to concurrently. Our final implementation is lockfree, heavily based on [11].
+\end{frame}
+
+\begin{frame}{Node Managers}
+To improve spatial locality, we implemented **node managers**, as described in [3, 4].
+
+Separate arrays are used for each variable id.
+\end{frame}
+
+\begin{frame}{A new struct definition}
+Similar to [3], we inline the variable in the ``pointer'' we pass around by value. This avoids unnecassary memory dereferences.
+\end{frame}
+
+\begin{frame}{A new struct definition}
+\begin{verbatim}
+struct bdd_ptr_packed {
+  uint16_t varid;
+  uint32_t idx;
+} __attribute__((packed));
+
+struct bdd {
+  bdd_ptr_packed lo;    // 6 bytes
+  bdd_ptr_packed hi;    // 6 bytes
+  uint16_t varid;       // 2 bytes
+  uint16_t refcount;    // 2 bytes
+};
+\end{verbatim}
+\end{frame}
+
+\begin{frame}{Caveat}
+In our current setup, this struct definition prevents us from having a dynamically-sized node manager. An additional layer of indirection would need to be added to allow this, something we did not get around to implementing.
+\end{frame}
+
+\begin{frame}{It's pretty small, though}
+16bytes, which lets us we a compare and swap.
+\end{frame}
+
+\section{BFS}
+
+\begin{frame}
+We have an expand and reduce phase. We use an ITE formulation of BFS, similar to [8].
+
+Lets us reuse code from DFS and if need be, switch between the two.
+\end{frame}
+
+\begin{frame}{We reuse the expand and reduce queue}
+We only saw this approach in a couple of papers. A lot of the literature has thread-local expand queues and a global reduce queue.
+
+Because of this reuse, the expand queue is shared between workers.
+\end{frame}
+
+\section{The Request Table}
+
+\begin{frame}
+Maps ite triples to a result node. Using the ite formulation forces the keys to be pretty large, forcing us to use fine-grained-locking in leu of compare and swaps.
+\end{frame}
+
+\begin{frame}{Reuse across calls}
+This is what saved us. Each BFS call needs a fresh request table. It's far too expensive to reallocate the table each time.
+
+We introduce a version counter. To delete_all, simply increment the version by one. Table entries with obsolete versions are treated as empty.
+\end{frame}
+
+\begin{frame}{Computer Nerd Details - XO Laptop Touch (2013)\cite{faq}}
+\begin{itemize}
+\item 1GB - 2GB RAM
+\item 8GB SSD storage
+\item Keyboard, touchpad
+\item ARM processor
+\item 5 GHz wifi support
+\item Bluetooth
+\item HDMI
+\item Accelerometer
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Computer Nerd Details - XO Laptop Touch (2013)}
+\begin{itemize}
+\item 1200 x 900 resolution
+\item 7.5`` screen
+\item Lots of integrated peripherals
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Computer Nerd Details - Software}
+\begin{itemize}
+\item Fedora-based operating system (students can have root)
+\item Custom-built Sugar GUI (written in python, GTK+) \cite{sugar}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Computer Nerd Details - Summary}
+Specs roughly equivalent to an iPhone. Strong emphasis on low power consumption. It uses commonly used open-source software.
+\end{frame}
+
+\section{Cost}
+
+\begin{frame}[standout]
+  The laptop costs around \$200 USD all told
+\end{frame}
+
+\begin{frame}[standout]
+  Most low-income countries spend around \$48 USD per primary student per year
+\end{frame}
+
+\begin{frame}
+  The laptops are advertised as having a lifespan of around 4 years. This would place the laptop as the sole cost of education for a single child over the course of 4 years.
+\end{frame}
+
+\section{Effectiveness}
+
+\begin{frame}{Peru}
+A 15-month study across 319 primary schools in Peru found \alert{no evidence} of any effect on enrollment or math and language tests. \cite{peru}
+\end{frame}
+
+\begin{frame}{Peru - Background}
+\begin{itemize}
+\item Spends an average of \$438 per primary student per year
+\item 902,000 laptops purchased
+\item Though the laptops are equipped with wifi, the pilot schools in Peru did not have internet.
+\item Most of these schools had low levels of access to water and proper sewage systems.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Peru - Implementation}
+\begin{itemize}
+\item Though OLPC intends for students to take the laptops home, school policies placed the financial responsibility for damage on the student's family if damaged at home.
+\item In the week before survey, only 40\% of students took laptops home.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Peru - Conclusion}
+``Intense access to computers does not lead to measurable effects in academic achievement, but it did generate some positive impact on general cognitive skills.'' %\cite{peru}
+
+Authors suggest the importance of providing the technology with an associated pedagogical model to help guide the use of the devices.
+\end{frame}
+
+\begin{frame}{Uruguay - 2007}
+Results from the first two years of the program's implementation had \alert{no effects} on math and reading scores.\cite{uru}
+
+Possible explanations:
+\begin{itemize}
+\item No compulsory teacher training
+\item Often used to search for information on internet
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Uruguay - 2007}
+\begin{itemize}
+\item Over 350,000 students involved
+\item \$260 per child, with \$21 annual cost
+\item 2013 study showed that \alert{only 4.1\%} of laptops were used ``all'' or ``most'' days in 2012.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Falling Usage}
+In Uruguay, only 21.5\% of teachers report using the XOs in class on a near daily basis. In Alabama, 80.3\% percent of students report them never or seldom use the laptops. \cite{mark}
+\end{frame}
+
+\begin{frame}{Lack of Integration}
+Mark Warschauer of UC Irvine in particular argues that OLPC is an example of the pitfalls of technocratic worldviews and a lack of understanding of long term solutions. \cite{mark}
+
+Many agree that more integrated approach would likely lead to better results. \cite{uru, peru}
+\end{frame}
+
+\begin{frame}
+``The OLPC deployments that simply tried to hand out laptops have failed because they ignored local contexts.''\cite{mark}
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}{My Take}
+I think the numbers speak for themselves. Low usage, no demonstrable evidence that the machines increase test scores, high cost, and lack of integration all point to OLPC being a poorly implemented ICTD project.
+
+It doesn't seem like project leaders attempted to grasp the needs of their target audience prior to embarking on this investment.
+\end{frame}
+
+\begin{frame}{My Take}
+Some of these schools don't have proper water and sewage systems, and we want to focus on giving \textit{every child} a laptop they can take home before fixing the water?
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+\bibliography{presentation}
+\bibliographystyle{abbrv}
+\end{frame}
+
+\end{document}
