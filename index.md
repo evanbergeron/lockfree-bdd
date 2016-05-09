@@ -205,11 +205,19 @@ We can see that the number of memory accesses our BFS implementation makes are s
 
 ## Future Work
 
-There a handful of optimizations on sequential BDDs that we didn't get the chance to implement. Complement edges and standard triples as described in [2] would be the first step.
+Despite the compelling speedup and memory access data, our implementation is not competitive in raw walltime with established BDD libraries. There are a handful sequential optimizations that we didn't get the chance to implement. Complement edges and standard triples as described in [2] would be the first step.
 
-The size of the resulting BDD can be highly dependent on the ordering of variables. For this reason, some BDD libraries provide heuristics for dynamic variable reordering.
+To our knowledge, this would be the first time these ite-style optimizations would be combined with a BFS traversal.
+
+Additionally, the size of the resulting BDD can be highly dependent on the ordering of variables. For this reason, some BDD libraries provide heuristics for dynamic variable reordering.
 
 Additionally, we'd be interested in implementing a hybrid DFS/BFS traversal in the spirit of [4, 5, 6].
+
+## Lessons Learned
+
+In choosing this project, we unwittingly stumbled into one of the most studied areas of computer science. It was a bit overwhelming getting our feet under us in understanding how to implement sequential BDDs. We spent a great deal of time reviewing existing literature, oftentimes having to follow a trail of references to understand the original papers we were interested in.
+
+Because of this, we wound up having to implement a good deal of the code in the final week of the project. Fortunately, we both happily embraced immersing ourselves in the project for the final week. BDDs are a very cool data structure and it was a lot of fun reasoning over various design decisions. It was also very satsifying to finally get something working :)
 
 ## References
 
