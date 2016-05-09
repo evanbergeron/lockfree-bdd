@@ -27,6 +27,7 @@ struct var_reqs {
   bfs_ht *requests_ht;// Hashtable of requests
   uint32_t capacity;  // Length of the array
   uint32_t numnodes;  // Number of requests in the array
+  uint8_t requests_resize_lock;
 };
 
 struct all_reqs {

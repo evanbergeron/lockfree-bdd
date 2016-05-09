@@ -195,6 +195,7 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
         if (cur_key.raw == key.raw) {
           uint32_t idx = __atomic_load_n(&ht->ht[i].value.value.req_idx, ATOMICITY);
       assert(idx != 0); 
+      assert(idx < 4096);
           return -((int32_t)idx);
         }
 
@@ -228,6 +229,7 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
       if (cur_key.raw == key.raw) {
         uint32_t idx = __atomic_load_n(&ht->ht[i].value.value.req_idx, ATOMICITY);
       assert(idx != 0); 
+      assert(idx < 4096);
         return -((int32_t)idx);
       }
 
@@ -247,6 +249,7 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
       uint32_t elems = __atomic_add_fetch(&ht->elems, 1, ATOMICITY);
       unlock(&ht->ht[i].lock);
       assert(idx != 0); 
+      assert(idx < 4096);
       return (int32_t)idx;
 
     }
