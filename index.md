@@ -63,7 +63,7 @@ And so begins the long journey to spatial locality.
 
 Our initial unique table used separate chaining with linked lists in each bucket. After decided that we wanted to focus on memory locality, we switched a linear-probing, open-addressing scheme.
 
-In a parallel context, this hash table must be able to be read and written to concurrently. Our final implementation is heavily based on [11].
+In a parallel context, this hash table must be able to be read and written to concurrently. Our final implementation is lockfree, heavily based on [11].
 
 ### Node Managers
 
@@ -80,8 +80,6 @@ struct bdd_node {
 with each of these nodes being malloc'd individually. To improve spatial locality, we implemented **node managers**, as described in [3, 4].
 
 At init time, the node managers pre-allocate large blocks of memory. When the user requests a new node allocation, they must provide a variable id. Node with similar variable ids are grouped together.
-
-The intent was to use the node managers in conjunction with a BFS-style tree traversal. The BFS operation is significantly trickier than DFS, involving two separate phases. At this point, we only had the first phase correctly implemented.
 
 ### A new struct definition
 
@@ -109,9 +107,9 @@ The packed pointers are used as unique identifiers into our unique table. Since 
 
 This was hard. It took us several tries to correctly implement this, though it was our intent for a while. All of the memory locality design decisions made above were made with BFS in mind.
 
-Recall that in the BDD graphs, the value of a node is dependent on its childrens' values. In a DFS context, we compute the value of the children prior to the parent, making reduction straightforward. In BFS, we need two phases: an expansion and a reduction phase.
+In BDD graphs, the value of a node is dependent on its childrens' values. In a DFS context, we compute the value of the children prior to the parent, making reduction straightforward. In BFS, we need two phases: an expansion and a reduction phase.
 
-Our final implementation uses the ite formulation of bfs, similar to [8]. Our understanding is that this incurs more memory accesses than the more modern (op, node, node) implementations as in [4, 5, 6]. We ultimately chose this approach because of its consistency with our dfs implementation, which allowed for a good deal of code reuse.
+Our final implementation uses the ite formulation of BFS, similar to [8]. Our understanding is that this incurs more memory accesses than the more modern (op, node, node) implementations as in [4, 5, 6], but we ultimately chose this approach because of its consistency with our DFS implementation, allowing for a good deal of code reuse.
 
 We maintain a mapping from bdd_node triples to a final bdd_result. We maintain a dynamically-resized list for each variable. The elements of the list are 4-tuples: 3 bdd_ptrs (a key) and 1 bdd node (a result).
 
@@ -181,7 +179,7 @@ Designing an efficient request table turned out to be pretty tricky. In a typica
 
 To support this operation, we introduced a version counter. Each element in the table stores its version number. Our delete_all operation simply increments the version counter.
 
-Our final implementation maintains an array and hash table for each variable id. The array stores result nodes which will eventually be forwarded into the unique table. The hash table's key are (f, g, h) triples. The values are the index into the aforementioned array.
+Our final implementation maintains an array and hash table for each variable id. The array stores result nodes, all of which will eventually be forwarded into the unique table. The hash table's keys are (f, g, h) triples. The values are indicies into the array.
 
 All of these data structures are accessed in parallel by multiple threads. The array supports lock-free atomic updates and resizing. The hash table uses fine-grained locking with an open-addressing, linear probing scheme.
 
