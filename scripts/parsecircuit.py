@@ -10,10 +10,13 @@ def writeln(f, s):
   f.flush()
 
 def writeheader(f, circuit):
-  writeln(f, "#include \"bdd.h\"")
+  writeln(f, "#include <bdd.h>")
   writeln(f, "#include <iostream>")
   writeln(f, "int main() {")
-  writeln(f, "bdd_init({num},{num},{num});".format(num=''.join(circuit).count("INPUT")**3))
+  numnodes = ''.join(circuit).count("INPUT")+2
+  writeln(f, "bdd_init({ut_size},{num},{numnodes});".format(numnodes=numnodes,
+                                                            ut_size='1<<20',
+                                                            num=0))
 
 def writefooter(f):
   writeln(f, "return 0;")
