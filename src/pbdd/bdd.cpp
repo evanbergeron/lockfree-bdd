@@ -51,7 +51,6 @@ void bf_ite_expand() {
   for (int varid = 0; varid < requests.numvars; varid++) {
     #pragma omp parallel for
     for (int i = 0; i < requests.reqs[varid].numnodes; i++) {
-
       req *cur_req = varididx2cptr(varid, i);
 
       bdd_ptr f = unpack_bddptr(cur_req->f);

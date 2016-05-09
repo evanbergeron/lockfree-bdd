@@ -1,4 +1,5 @@
 #include <iostream>
+#include <omp.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
@@ -17,6 +18,7 @@ static bool reqs_equal(const bdd_ptr &f,
                 const bdd_ptr &g,
                 const bdd_ptr &h,
                 const req &request);
+static pthread_barrier_t barrier;
 
 /** All the requests */
 all_reqs requests;
@@ -44,40 +46,33 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
     return result;
   }
 
-  std::cout << "idx: " << reqs->capacity << " " << ht_idx << std::endl;
   assert(ht_idx != 0);
 
   ht_idx--;
 
-  __atomic_fetch_add(&reqs->numnodes, 1, ATOMICITY);
   uint32_t idx = (uint32_t)ht_idx;
   uint32_t cap = __atomic_load_n(&reqs->capacity, ATOMICITY);
- 
+
   // we're over capacity 
-  if (cap <= idx) {
+  if (cap/2 <= idx) { // LOLOL
 
     // got the resize lock
     if (!__atomic_test_and_set(&reqs->requests_resize_lock, ATOMICITY)) {
-      __atomic_thread_fence(ATOMICITY);
-
+      std::cout << "Resizing" << std::endl;
       reqs->requests = (req *)realloc(reqs->requests, sizeof(req)*cap*RESIZE_FACTOR); 
       __atomic_store_n(&reqs->capacity, cap*RESIZE_FACTOR, ATOMICITY);
       __atomic_clear(&reqs->requests_resize_lock, ATOMICITY);
-
-      __atomic_thread_fence(ATOMICITY);
     }
     
     // did not get the resize lock
     else {
-      __atomic_thread_fence(ATOMICITY);
-      __atomic_thread_fence(ATOMICITY);
+      while (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0);
     }
   }
   
   // there's a resize going on now, so wait
   else if (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0) {
-      __atomic_thread_fence(ATOMICITY);
-      __atomic_thread_fence(ATOMICITY);
+    while (__atomic_load_n(&reqs->requests_resize_lock, ATOMICITY) != 0);
   }
 
   // Then, insert at tail
@@ -94,6 +89,8 @@ req_ptr bfs_reqs_lookup_or_insert(bdd_ptr f, bdd_ptr g, bdd_ptr h) {
   reqs->requests[idx].result.hi.varid = magic_num_16;
   reqs->requests[idx].result.lo.idx = magic_num_32;
   reqs->requests[idx].result.hi.idx = magic_num_32;
+
+  __atomic_fetch_add(&reqs->numnodes, 1, ATOMICITY);
 
   req_ptr result;
   result.varid = min_varid;
