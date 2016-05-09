@@ -5,7 +5,7 @@
 #include "nodemanager.h"
 #include "bfs_reqs_ht.h"
 
-#define INITIAL_HT_SIZE (1 << 15)
+#define INITIAL_HT_SIZE (1 << 18)
 #define ATOMICITY __ATOMIC_SEQ_CST
 
 /** A request key */
@@ -43,13 +43,13 @@ struct bfs_ht_bucket {
 /** Hashtable metadata */
 struct bfs_ht {
   bfs_ht_bucket *ht;
-  uint8_t is_resizing;        // A global lock on the hashtable
   uint32_t cur_num_threads;   // The current number of threads operating on the table
   uint32_t size;              // The length of ht
   uint32_t elems;             // The number of elements in the set
   uint32_t next_idx;          // The next value to use
   uint32_t version;           // The current version number
   uint32_t varid;             // The varid this hashtable is associated with
+  uint8_t is_resizing;        // A global lock on the hashtable
 };
 
 /** Hash a key */
@@ -168,7 +168,6 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
     iters++;
 
     // First, read the contents of the bucket
-    {
 
       // Wait for this bucket to be done processing
       bool was_locked = blocking_wait(&ht->ht[i].lock);
@@ -195,7 +194,6 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
         if (cur_key.raw == key.raw) {
           uint32_t idx = __atomic_load_n(&ht->ht[i].value.value.req_idx, ATOMICITY);
       assert(idx != 0); 
-      assert(idx < 4096);
           return -((int32_t)idx);
         }
 
@@ -206,7 +204,6 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
 
       }
 
-    }
 
     // If we make it here, we know that the bucket's version is old
     // Try to get a lock to write here.
@@ -229,7 +226,6 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
       if (cur_key.raw == key.raw) {
         uint32_t idx = __atomic_load_n(&ht->ht[i].value.value.req_idx, ATOMICITY);
       assert(idx != 0); 
-      assert(idx < 4096);
         return -((int32_t)idx);
       }
 
@@ -242,14 +238,19 @@ int32_t bfs_ht_lookup_or_insert(bfs_ht *ht,
     // The version is old - write our contents
     // This is the critical section
     else {
-      ht->ht[i].key = key;
-      ht->ht[i].value.value.version = ht->version;
+      __atomic_store_n(&ht->ht[i].key.raw, key.raw, ATOMICITY);
+
       uint32_t idx = __atomic_add_fetch(&ht->next_idx, 1, ATOMICITY);
-      ht->ht[i].value.value.req_idx = idx;
+      ht_value value;
+      value.value.req_idx = idx;
+      value.value.version = ht->version;
+      __atomic_store_n(&ht->ht[i].value.raw, value.raw, ATOMICITY);
+
       uint32_t elems = __atomic_add_fetch(&ht->elems, 1, ATOMICITY);
+
       unlock(&ht->ht[i].lock);
+
       assert(idx != 0); 
-      assert(idx < 4096);
       return (int32_t)idx;
 
     }
