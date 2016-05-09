@@ -193,7 +193,13 @@ We used the OpenMP parallel for construct and GCC __atomic operations for everyt
 
 The above is a plot of the speedup we obtain when running the C3540 circuit. These tests were run on Xeon E5645 CPUs. These machines are 6 cores, with 12 total execution contexts.
 
-More analysis coming soon to a theater near you.
+<img src="http://i.imgur.com/NUQ1esh.png" width="100%" />
+
+The above graph compares the number of memory accesses made by our BFS and DFS implementations, both on a single thread. This test was run on the nqueens 7x7 board. The y-axis is a logarithmic scale - an increment of one is a factor of 10 increase.
+
+Here, shorter is better. The lower the bar, the fewer memory access / cache misses.
+
+We can see that the number of memory accesses our BFS implementation makes are several orders of magnitude less than that of our DFS Implementation.
 
 ## Future Work
 
@@ -221,7 +227,7 @@ Additionally, we'd be interested in implementing a hybrid DFS/BFS traversal in t
 
 [7] Tony Stornetta and Forrest Brewer. Implementation of an Efficient Parallel BDD Package.
 
-[8] Parnav Ashar and Matthew Cheong. Efficient Breath-First Manipulation of Binary Decision Diagrams.
+[8] Pranav Ashar and Matthew Cheong. Efficient Breath-First Manipulation of Binary Decision Diagrams.
 
 [9] Tom Van Dijk, Alfons Laarman, and Jaco van de Pol. Multi-Core BDD Operations for Symbolic Reachability.
 
