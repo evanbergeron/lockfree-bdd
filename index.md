@@ -12,7 +12,7 @@ We implemented a parallel binary decision diagram library, focusing on spatial l
 * A collection of lockfree hash tables that double as memory allocators and directed graphs.
 * A fine-grained-locking hash table with versioning, yielding a constant time delete_all operation.
 
-We obtain a speedup of 4 on 12 cores on the CS3540 circuit. We're currently collecting cache locality data, though our initial results are promising.
+We obtain a 3x speedup on 4 cores on the CS3540 circuit, scaling toward a speedup of 4x on 8-12 cores. This speedup is competitive with published results.
 
 ## Background
 
@@ -192,6 +192,8 @@ We used the OpenMP parallel for construct and GCC __atomic operations for everyt
 <img src="http://i.imgur.com/ceJv9vw.png " width="100%" />
 
 The above is a plot of the speedup we obtain when running the C3540 circuit. These tests were run on Xeon E5645 CPUs. These machines are 6 cores, with 12 total execution contexts.
+
+Notably, this speedup matches that achieved by [5] on the same data set.
 
 <img src="http://i.imgur.com/NUQ1esh.png" width="100%" />
 
