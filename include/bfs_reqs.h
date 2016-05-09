@@ -53,7 +53,7 @@ inline req *varididx2cptr(uint16_t varid, uint32_t idx) {
 void bfs_reqs_reset();
 
 /** Initialize the BDD queues */
-void bfs_reqs_init(uint16_t numvars);
+void bfs_reqs_init(uint16_t numvars, uint32_t nodespervar);
 
 /** Free the BDD queues */
 void bfs_reqs_free();

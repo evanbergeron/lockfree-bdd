@@ -6,7 +6,6 @@
 #include "bfs_reqs_ht.h"
 #include "nodemanager.h"
 
-#define INITIAL_CHAINSIZE 1024u
 #define RESIZE_FACTOR     2u
 #define MIN3(X,Y,Z) (X < Y ? (Z < X ? Z : X) : (Z < Y ? Z : Y))
 #define ATOMICITY __ATOMIC_SEQ_CST
@@ -96,13 +95,13 @@ void bfs_reqs_reset() {
 }
 
 /** Initialize the BDD queues */
-void bfs_reqs_init(uint16_t numvars) {
+void bfs_reqs_init(uint16_t numvars, uint32_t nodespervar) {
   requests.numvars = numvars;
   requests.reqs = (var_reqs *)calloc(sizeof(var_reqs), numvars);
   for (uint16_t i = 0; i < numvars; i++) {
-    requests.reqs[i].capacity = INITIAL_CHAINSIZE;
+    requests.reqs[i].capacity = nodespervar;
     requests.reqs[i].numnodes = 0u;
-    requests.reqs[i].requests = (req *)calloc(sizeof(req), INITIAL_CHAINSIZE);
+    requests.reqs[i].requests = (req *)calloc(sizeof(req), nodespervar);
     requests.reqs[i].requests_ht = bfs_ht_init(i);
     requests.reqs[i].requests_resize_lock = 0;
   }

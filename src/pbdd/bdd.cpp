@@ -310,7 +310,7 @@ void bdd_init(uint32_t chainsize, uint32_t cachesize, uint16_t num_vars) {
 
   node_manager_init(num_vars, chainsize);
   //memo_table_init(cachesize);
-  bfs_reqs_init(num_vars);
+  bfs_reqs_init(num_vars, cachesize);
 }
 
 /* ========== Analysis Functions ========= */
