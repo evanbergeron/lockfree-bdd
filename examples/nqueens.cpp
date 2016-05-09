@@ -147,7 +147,8 @@ bdd_ptr ndiag_constraints(int n) {
 void make_board(int n) {
 
   // Probably big enough?
-  uint32_t node_cache_size = 1 << 25;
+  uint32_t node_table_size = 1 << 18;
+  uint32_t node_cache_size = 1 << 21;
   uint16_t num_vars = n*n+2;
   bdd_init(node_cache_size, node_cache_size, num_vars);
 
