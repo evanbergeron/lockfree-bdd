@@ -5,7 +5,7 @@
 #include "nodemanager.h"
 #include "bfs_reqs_ht.h"
 
-#define INITIAL_HT_SIZE (1 << 18)
+#define INITIAL_HT_SIZE (1 << 20)
 #define ATOMICITY __ATOMIC_SEQ_CST
 
 /** A request key */
