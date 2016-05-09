@@ -15,7 +15,7 @@ Our preliminary tests suggest that our cache locality optimizations reduce last-
 
 Binary decision diagrams (BDDs) are directed graphs that represent boolean functions. Once constructed, these graphs provide constant time equivalence checking. Unfortunately, constructing these graphs can be costly.
 
-The graphs are built incrementally, usually taking a couple at a time and combining them. We focused on paralleling this combination step.
+The graphs are built incrementally, usually taking a couple at a time and combining them. We focused on parallelizing this combination step.
 
 This is tough for a number of reasons.
 
